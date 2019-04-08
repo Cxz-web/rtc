@@ -7,9 +7,41 @@ export default new Router({
   routes: [
     {
       path: '/',
-      name: 'landing-page',
-      component: require('@/components/LandingPage').default
+      name: 'login-page',
+      component: require('@/components/LoginPage').default
     },
+	
+	{
+		path: '/live',
+		name: 'live-page',
+		component: require('@/components/LivePage').default,
+		children: [
+			{
+				path: 'lessonMain',
+				name: 'lesson-main',
+				component: require('@/components/foregin/lessonMain').default
+			},
+			{
+				path: 'lessonsDetails',
+				name: 'lessons-details',
+				component: require('@/components/foregin/lessonsDetails').default
+			},
+			{
+				path: 'liveHandle',
+				name: 'live-handle',
+				component: require('@/components/foregin/liveHandle').default
+				
+			},
+			{
+				path: 'rtc',
+				name: 'live-rtc',
+				component: require('@/components/foregin/foreign_teacher_video').default
+			}
+		]
+	},
+	
+		
+		
     {
       path: '*',
       redirect: '/'
