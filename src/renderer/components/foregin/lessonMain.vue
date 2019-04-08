@@ -44,7 +44,19 @@
 			LessonsDetails
 		},
 		
+		mounted() {
+			this.notice()
+		},
+		
 		methods: {
+			notice() {
+				const n = new Notification('读书郎提示你', {
+					body: '直播开始啦，请尽快进入直播',
+					tag: 'Readyboy',
+					icon: require('../../assets/tip.png'),
+					timestamp: 3000
+				});
+			},
 			showDetails() {
 				this.show = true
 			},

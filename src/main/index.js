@@ -1,9 +1,13 @@
-import { app, BrowserWindow, ipcMain } from 'electron'
+import { app, BrowserWindow, ipcMain, Notification } from 'electron'
 
 /**
  * Set `__static` path to static files in production
  * https://simulatedgreg.gitbooks.io/electron-vue/content/en/using-static-assets.html
  */
+
+
+app.setAppUserModelId('8562871')
+
 if (process.env.NODE_ENV !== 'development') {
   global.__static = require('path').join(__dirname, '/static').replace(/\\/g, '\\\\')
 }
@@ -19,9 +23,35 @@ ipcMain.on('open-handle', (event, arg) => {
 
 
 
+
 let mainWindow
 let liveWindow
 let handleWindow
+
+const screenHandle = {}
+
+let full = false;
+
+
+ipcMain.on('system-event', (event, arg) => {
+	console.log(arg.win)
+	let dom = screenHandle[arg.win]
+	if(arg.handle === 'small') {
+		full = false
+		dom.minimize()
+	}
+	if(arg.handle === 'close') {
+		full = false
+		dom.close()
+	}
+	if(arg.handle === 'big') {
+		full = !full
+		dom.setFullScreen(full)
+	}
+})
+
+
+
 const winURL = process.env.NODE_ENV === 'development'
   ? `http://localhost:9080`
   : `file://${__dirname}/index.html`
@@ -51,8 +81,17 @@ function createWindow () {
 		mainWindow.close()
 		
 	})
+	const n = new Notification({
+		title: 'ReadyBoy',
+		subtitle: '登录提示',
+		body: '输入账号密码登录外教直播系统',
+		silent: false
+		
+	});
 
-
+	n.show()
+	
+	screenHandle.login = mainWindow
   mainWindow.loadURL(winURL)
 
   mainWindow.on('closed', () => {
@@ -76,7 +115,7 @@ function createLive() {
 			webSecurity: false
 		}
 	})
-	
+	screenHandle.live = liveWindow
 	liveWindow.loadURL(winURL + '?myLive=1')
 	liveWindow.on('closed', () => {
 	  liveWindow = null
@@ -103,7 +142,7 @@ function createHandle() {
 			webSecurity: false
 		}
 	})
-	
+	screenHandle.handle = handleWindow
 	handleWindow.loadURL(winURL + '?myHandle=1')
 	handleWindow.focus()
 	handleWindow.on('closed', () => {
@@ -119,6 +158,7 @@ function createHandle() {
 app.on('ready', createWindow)
 
 app.on('window-all-closed', () => {
+	console.log(123)
   if (process.platform !== 'darwin') {
     app.quit()
   }

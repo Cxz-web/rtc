@@ -1,8 +1,8 @@
 {
-  "name": "ReadyBoy",
+  "name": "Readyboy",
   "version": "0.0.1",
-  "author": "",
-  "description": "An electron-vue project",
+  "author": "cxz",
+  "description": "Online live streaming education platform",
   "license": null,
   "main": "./dist/electron/main.js",
   "scripts": {
@@ -17,8 +17,8 @@
     "postinstall": ""
   },
   "build": {
-    "productName": "ReadyBoy",
-    "appId": "com.example.yourapp",
+    "productName": "Readyboy",
+    "appId": "8562871",
     "directories": {
       "output": "build"
     },
