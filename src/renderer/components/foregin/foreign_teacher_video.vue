@@ -24,8 +24,12 @@
 			<canvas class="myCanvas" @mousedown="write($event)" ref="myCanvas"></canvas>
 		</div>
 		
-		
 		<div class="foreign__operation" @click="openHandle"></div>
+		<div class="foreign__camera" @click="openCamera"></div>
+		
+		<div class="foreign__shade"></div>
+		
+		<!-- <video  class="test__video" ref="myVideo" id="my"></video> -->
 		
 	</div>
 </template>
@@ -33,14 +37,16 @@
 <script>
 	import * as QNRTC from "pili-rtc-web"
 	import LiveModel from '../../../model/live.js'
-	const {	ipcRenderer	} = require('electron')
+	const {	ipcRenderer, desktopCapturer } = require('electron')
+	// 01201903181114562641
+	// 01201901151300405631
 	export default {
 		name: 'live-rtc',
 		data() {
 			return {
 				ppt_url: null,
 				myRTC: null,
-				roomId: '01201901151300405631',
+				roomId: '01201903181114562641',
 				live: null,
 				audioId: null,
 				videoId: null,
@@ -58,26 +64,36 @@
 				readyPen: false,
 				readyEraser: false,
 				showFull: true,
-				isFull: false
+				isFull: false,
+				camera: false
 				
 			}
 		},
 		
 		
+		
 		mounted() {
 			this.openPPT()
-			
 			this.$refs.myCanvas.width = document.body.clientWidth;
 			this.$refs.myCanvas.height = document.body.clientHeight - 25;
 			QNRTC.log.setLevel("disable")
 			this.myRTC = new QNRTC.TrackModeSession()
 			this.live = new LiveModel()
-			this.getDevice()
+			// this.getDevice()
 			window.onresize = () => {
 				this.$refs.myCanvas.width = document.body.clientWidth;
 				this.$refs.myCanvas.height = document.body.clientHeight - 25;
 			}
-			
+// 			console.log(QNRTC.deviceManager.deviceInfo)
+// 			QNRTC.deviceManager.deviceInfo.forEach((item) => {
+// 				if(item.kind === 'videoinput') {
+// 					this.videoId = item.deviceId
+// 				}
+// 				if(item.kind === 'audioinput' && item.deviceId != 'default') {
+// 					this.audioId = item.deviceId
+// 				}
+// 			})
+// 			console.log(11113, this.videoId, this.audioId)
 			// this.joinRoom()
 		},
 		
@@ -88,13 +104,99 @@
 		
 		methods: {
 			
+			openCamera() {
+				if(this.camera) {
+					return
+				}
+				
+				this.notice()
+				this.camera = true
+				this.joinRoom()
+			},
 			
+			notice() {
+				const n = new Notification('读书郎提示你', {
+					body: '摄像头开启成功',
+					tag: 'Readyboy',
+					icon: require('../../assets/tip.png'),
+					timestamp: 3000
+				});
+			},
 			
 			
 			openHandle() {
-				console.log(window.location)
+				
 				ipcRenderer.send('open-handle', true)
 
+			},
+			
+			getDeskCapture(qiniuTracks) {
+					let that = this
+					desktopCapturer.getSources({ types: ['window', 'screen'] }, (error, sources) => {
+					  if (error) throw error
+					  for (let i = 0; i < sources.length; ++i) {
+							if (sources[i].name === 'ReadyBoy') {
+								console.log(sources[i])
+					      navigator.mediaDevices.getUserMedia({
+					        audio: false,
+					        video: {
+					          mandatory: {
+					            chromeMediaSource: 'desktop',
+					            chromeMediaSourceId: sources[i].id,
+					            minWidth: 1280,
+					            maxWidth: 1280,
+					            minHeight: 720,
+					            maxHeight: 720
+					          }
+					        }
+					      }).then((stream) => handleStream(stream))
+					        .catch((e) => handleError(e))
+					      return
+					    }
+					  }
+					})
+					
+					async function handleStream (stream) {
+						
+// 						let oVideo = document.getElementById('my')
+// 					  oVideo.srcObject = stream
+// 						console.log(oVideo, stream)
+// 					  oVideo.onloadedmetadata = (e) => {oVideo.play();console.log('play')}
+						
+						const track = stream.getVideoTracks()[0]
+						console.log(track)
+						const videoTrack = await QNRTC.createCustomTrack(track, "video-track", 1200)
+						qiniuTracks.push(videoTrack)
+						await that.myRTC.publish(qiniuTracks)
+						let options = []
+						qiniuTracks.forEach((item) => {
+							//this.tracks.push(item.info.trackId)
+							if (item.info.tag === 'video-track') {
+								let sOpt = {
+									trackId: item.info.trackId,
+									x: 0,
+									y: 0,
+									w: 1280,
+									h: 720,
+									z: 1
+								}
+								options.push(sOpt)
+							} else {
+								let aOpt = {
+									trackId: item.info.trackId
+								}
+								options.push(aOpt)
+							}
+						})
+						
+						console.log('合流配置:', qiniuTracks)
+						that.myRTC.addMergeStreamTracks(options);
+						console.log('发布成功', videoTrack)
+					}
+					
+					function handleError (e) {
+					  console.log(e)
+					}
 			},
 			
 			write(e) {
@@ -164,7 +266,6 @@
 							this.videoId = item.deviceId
 						}
 					})
-					console.log(123)
 					console.log(res,this.audioId, this.videoId)
 				})
 				
@@ -172,38 +273,35 @@
 			async joinRoom() {
 				
 				// 获取token
-				const res = await this.live.getRoomToken(this.roomid, 'admin')
+				const res = await this.live.getRoomToken(this.roomId, 'admin')
 				const token = res.data.room_token
 				
 				// 加入房间
 				await this.myRTC.joinRoomWithToken(token)
 				
 				// 开启本地摄像头
+				console.log('open',this.audioId,  this.videoId)
 				const localTracks = await QNRTC.deviceManager.getLocalTracks({
-					audio: {
-						enabled: true,
-						tag: "audio",
-						deviceId: this.audioId
-					},
+// 					audio: {
+// 						enabled: true,
+// 						tag: "audio"
+// 					},
 					
 					video: {
 						enabled: true,
-						tag: "video",
-						deviceId: this.videoId
+						tag: "video"
 					}
 				})
-				
 				let localDom = document.getElementById('local')
-				console.log(localTracks)
+				
 				localTracks.forEach((item) => {
 					if(item.info.tag === 'video') {
 						item.play(localDom)
 					}
 				})
+				this.getDeskCapture(localTracks)
 			},
-			a() {
 				
-			},
 			openPPT() {
 				this.ppt_url = `https://view.officeapps.live.com/op/embed.aspx?src=https://www.cxzweb.club/api/ppt/111.pptx`
 			}
@@ -212,8 +310,6 @@
 </script>
 
 <style scoped>
-	
-	
 	.foreign {
 		width: 100%;
 		height: 100%;
@@ -225,6 +321,7 @@
 	
 	.myFrame{
 		user-select: none;
+		background-color: black;
 	}
 	
 	@keyframes foreIn{
@@ -243,6 +340,7 @@
 		width: 100%;
 		height: 100%;
 		user-select: none;
+		background-color: black;
 		
 	}
 	
@@ -391,8 +489,44 @@
 		cursor: pointer;
 	}
 	
+	.foreign__camera{
+		position: absolute;
+		width: 18px;
+		height: 18px;
+		bottom: 4px;
+		left: 140px;
+		background-image: url(asserts/Camera2.svg);
+		background-size: cover;
+		background-repeat: no-repeat;
+		background-position: center center;
+		cursor: pointer;
+	}
+	
+	.foreign__camera:active {
+		background-image: url(asserts/Camera3.svg);
+	}
+	
 	.foreign__operation:active {
 		background-image: url(asserts/handle1.svg);
+	}
+	
+	.foreign__shade {
+		background-color: #444444;
+		height: 18px;
+		width: 200px;
+		position: fixed;
+		z-index: 9999;
+		right: 2px;
+		bottom: 2px;
+	}
+	
+	.test__video {
+		position: fixed;
+		right: 0px;
+		bottom: 0px;
+		width: 260px;
+		height: 146px;
+		background-color: grey;
 	}
 	
 </style>

@@ -57,7 +57,7 @@ const winURL = process.env.NODE_ENV === 'development'
   : `file://${__dirname}/index.html`
 
 
-
+const path = require('path')
 // login窗口
 function createWindow () {
   /**
@@ -93,7 +93,8 @@ function createWindow () {
 	
 	screenHandle.login = mainWindow
   mainWindow.loadURL(winURL)
-
+	
+	// mainWindow.loadFile(path.resolve(__dirname, './index.html'))
   mainWindow.on('closed', () => {
     mainWindow = null
   })

@@ -29,6 +29,7 @@ class Live {
 	}
 	
 	getRoomToken(roomName, userId) {
+		console.log(1111, roomName)
 		let options = {
 			url: `v1/rtn/rooms/${roomName}/users/admin/token`,
 			method: 'get',

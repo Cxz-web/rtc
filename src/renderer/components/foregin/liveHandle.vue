@@ -26,8 +26,8 @@
 <script>
 	
 	export default {
+		name: 'live-handle',
 		methods: {
-			name: 'live-handle',
 			change(e) {
 				e.target.classList.toggle('handle__btn--active')
 				console.log(e)
@@ -45,6 +45,7 @@
 		box-sizing: border-box;
 		padding: 10px;
 		animation: handle ease-in .3s forwards;
+		
 	}
 	
 	@keyframes  handle{

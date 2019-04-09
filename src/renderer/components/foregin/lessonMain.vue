@@ -22,6 +22,7 @@
 		</div>
 		
 		<lessons-details v-if="show"></lessons-details>
+		
 	</div>
 	
 	

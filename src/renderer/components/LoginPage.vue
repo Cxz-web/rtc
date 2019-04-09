@@ -3,35 +3,37 @@
 		<div class="login__logo"></div>
 		<div class="login__wrap"><input type="text" class="login__btn" placeholder="account"></div>
 		<div class="login__wrap"><input type="text" class="login__btn" placeholder="password"></div>
-		<div class="login__in" @click="login">SIGN IN</div>
+		<div class="login__tip" v-if="showLoading"><span v-for="(item, index) in tip" class="login__title" :style="`animation-delay: ${index*0.3}s;`">{{item}}</span></div>
+		<div class="login__in" @click="login" ref="btn"> <div v-if="!showLoading">SIGN IN</div><div v-else class="login__loading"></div></div>
 	</div>
 </template>
 
 <script>
-	const {
-		ipcRenderer
-	} = require('electron')
+	const { ipcRenderer } = require('electron')
+	
 	export default {
 		name: 'login-page',
+		data() {
+			return {
+				tip: '正在登录...',
+				showLoading: false
+			}
+		},
 		mounted() {
 			this.$refs.login.classList.add('in')
 		},
 		methods: {
 			login() {
-// 				let myNotification = new Notification('标题', {
-// 					body: '通知正文内容'
-// 				})
-// 				console.log(myNotification)
-// 				myNotification.onclick = () => {
-// 					console.log('通知被点击')
-// 				}
-				this.$refs.login.classList.add('out')
-				this.$refs.login.addEventListener('animationend', () => {
-					ipcRenderer.send('close-login', true)
-				})
-			
-				
-				
+				if(this.showLoading) return
+				this.showLoading = true
+				this.$refs.btn.classList.add('login__in--disabled')
+				setTimeout(() => {
+					this.tip = '登录成功'
+					this.$refs.login.classList.add('out')
+					this.$refs.login.addEventListener('animationend', () => {
+						ipcRenderer.send('close-login', true)
+					})	
+				}, 2000)
 			}
 		}
 	}
@@ -94,7 +96,9 @@
 	}
 
 	.login__in {
-		-webkit-app-region: no-drag;
+		display: flex;
+		justify-content: center;
+		align-items: center;
 		width: 290px;
 		height: 50px;
 		background-color: darkorange;
@@ -109,6 +113,20 @@
 		letter-spacing: 1px;
 		font-weight: bold;
 		margin-top: 180px;
+	}
+	
+	.login__in--disabled{
+		cursor: not-allowed;
+		background-color: deeppink;
+	}
+	
+	.login__loading{
+		background-image: url(../assets/loading-spinning-bubbles.svg);
+		width: 34px;
+		height: 34px;
+		background-repeat: no-repeat;
+		background-size: contain;
+		background-position: center;
 	}
 
 	.login__in:active {
@@ -140,6 +158,43 @@
 		to{
 			opacity: 1;
 			transform: scale(0);
+		}
+	}
+	
+	.login__tip{
+		color: white;
+		height: 30px;
+		font-size: 22px;
+		letter-spacing: 3px;
+		margin-top: 24px;
+		display: flex;
+		position: absolute;
+		top: 300px;
+		
+		animation: tipOut ease-out .3s ;
+	}
+	
+	@keyframes tipOut{
+		from{
+			opacity: 0;
+		}
+		to{
+			opacity: 1;
+		}
+	}
+	
+	.login__title{
+		animation: moveTitle ease-in-out   alternate .6s infinite;
+		transform: translate(0, 0);
+		text-shadow: 1px 1px 20px #FFffff;
+		font-weight: bolder;
+		user-select: none;
+	}
+	
+	@keyframes moveTitle{
+		to{
+			transform: translate(0, -6px);
+			
 		}
 	}
 	
