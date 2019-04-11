@@ -18,7 +18,7 @@ ipcMain.on('open-handle', (event, arg) => {
 		handleWindow.focus()
 		return
 	}
-	createHandle()
+	createHandle(arg)
 })
 
 
@@ -129,7 +129,7 @@ function createLive() {
 
 // 操作窗口
 
-function createHandle() {
+function createHandle(id) {
 	handleWindow = new BrowserWindow({
 	  height: 480,
 	  useContentSize: true,
@@ -144,7 +144,7 @@ function createHandle() {
 		}
 	})
 	screenHandle.handle = handleWindow
-	handleWindow.loadURL(winURL + '?myHandle=1')
+	handleWindow.loadURL(winURL + `?myHandle=${id}`)
 	handleWindow.focus()
 	handleWindow.on('closed', () => {
 	  handleWindow = null

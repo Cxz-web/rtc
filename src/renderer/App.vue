@@ -1,7 +1,7 @@
 <template>
 	<div id="app">
-		<div class="app__move"></div>
-		<div class="app__wrap no-drag" ref="move">
+		<div class="app__move" ></div>
+		<div class="app__wrap no-drag" ref="move" :class="{'app__wrap--move': !showMove}">
 			<div class="app__btn btn1" @click="handle('close')"></div>
 			<div class="app__btn btn2" @click="handle('small')"></div>
 			<div class="app__btn btn3" @click="handle('big')"></div>
@@ -20,6 +20,11 @@
 		data() {
 			return {
 				win: ''
+			}
+		},
+		computed: {
+			showMove() {
+				return this.$router.currentRoute.fullPath.includes('liveHandle') ? false : true 
 			}
 		},
 		created() {
@@ -93,7 +98,7 @@
 		left: 0px;
 		width: 100%;
 		-webkit-app-region: drag;
-		/* opacity: 0; */
+		opacity: 0;
 		z-index: 999;
 
 
@@ -103,11 +108,17 @@
 		position: fixed;
 		top: 4px;
 		right: 2px;
-		z-index: 9999;
+		z-index: 99999;
 		display: flex;
 		flex-direction: row;
 		opacity: 0;
 		transition: opacity .2s ease-in;
+	}
+	
+	
+	.app__wrap--move {
+		top: 14px;
+		right: 20px;
 	}
 
 	.app__btn {
@@ -134,6 +145,18 @@
 
 	.btn3 {
 		background-color: #3bc151;
+	}
+	
+	.leaveOut {
+		animation: leaveOut ease-in-out 1s backwards;
+		transform-origin: top right;
+	}
+	
+	@keyframes leaveOut{
+		to{
+			transform: scale(0);
+			opacity: 0.6;
+		}
 	}
 
 

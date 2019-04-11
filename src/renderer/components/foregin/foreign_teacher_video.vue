@@ -5,7 +5,18 @@
 		</div>
 		<!-- <div class="foreign_btn" v-if="!ppt_url" @click="openPPT">open</div> -->
 		
-		<div class="foreign__local" ref="local" id="local"></div>
+		
+		<div class="video__box">
+			<div class="foreign__local" ref="local" id="local"></div>
+			<div class="other__box" ref="other">
+				<div class="other__close" @click="close"></div>
+			</div>
+		</div>
+		
+		<div class="foreign__audio" ref="audio">
+			
+		</div>
+		
 		
 		<div class="ppt__box">
 			<!-- 画笔 -->
@@ -27,7 +38,7 @@
 		<div class="foreign__operation" @click="openHandle"></div>
 		<div class="foreign__camera" @click="openCamera"></div>
 		
-		<div class="foreign__shade"></div>
+		<div class="foreign__shade" v-if="ppt_url"></div>
 		
 		<!-- <video  class="test__video" ref="myVideo" id="my"></video> -->
 		
@@ -65,25 +76,28 @@
 				readyEraser: false,
 				showFull: true,
 				isFull: false,
-				camera: false
-				
+				camera: false,
+				otherTrackList: null,
+				isClose: false
 			}
 		},
 		
-		
-		
 		mounted() {
 			this.openPPT()
-			this.$refs.myCanvas.width = document.body.clientWidth;
-			this.$refs.myCanvas.height = document.body.clientHeight - 25;
+			setTimeout(() => {
+				this.$refs.myCanvas.width = document.body.clientWidth;
+				this.$refs.myCanvas.height = document.body.clientHeight - 25;
+			}, 3000)
+			
 			QNRTC.log.setLevel("disable")
 			this.myRTC = new QNRTC.TrackModeSession()
 			this.live = new LiveModel()
-			// this.getDevice()
+			this.getDevice()
 			window.onresize = () => {
 				this.$refs.myCanvas.width = document.body.clientWidth;
 				this.$refs.myCanvas.height = document.body.clientHeight - 25;
 			}
+			this.$store.dispatch('setLessonId', this.roomId)
 // 			console.log(QNRTC.deviceManager.deviceInfo)
 // 			QNRTC.deviceManager.deviceInfo.forEach((item) => {
 // 				if(item.kind === 'videoinput') {
@@ -108,7 +122,9 @@
 				if(this.camera) {
 					return
 				}
-				
+				QNRTC.deviceManager.deviceInfo.forEach( (item) => {
+					
+				})
 				this.notice()
 				this.camera = true
 				this.joinRoom()
@@ -126,7 +142,7 @@
 			
 			openHandle() {
 				
-				ipcRenderer.send('open-handle', true)
+				ipcRenderer.send('open-handle', this.roomId)
 
 			},
 			
@@ -190,7 +206,7 @@
 						})
 						
 						console.log('合流配置:', qiniuTracks)
-						that.myRTC.addMergeStreamTracks(options);
+						that.myRTC.addMergeStreamTracks(options)
 						console.log('发布成功', videoTrack)
 					}
 					
@@ -200,7 +216,7 @@
 			},
 			
 			write(e) {
-			
+				console.log(e)
 				let canvas = this.$refs.myCanvas
 				let ctx = this.$refs.myCanvas.getContext("2d")
 			
@@ -256,20 +272,21 @@
 				this.index = 0
 			},
  			getDevice() {
-				QNRTC.deviceManager.on("device-update", (res) => {
+				QNRTC.deviceManager.on("device-add", (res) => {
+					console.log('插入新设备', res)
+					this.audioId = res.deviceId
+// 					res.forEach((item) => {
+// 						if(item.kind === 'audioinput') {
+// 							this.audioId = item.deviceId
+// 						}
+// 						if(item.kind === 'videoinput') {
+// 							this.videoId = item.deviceId
+// 						}
+// 					})
 					
-					res.forEach((item) => {
-						if(item.kind === 'audioinput') {
-							this.audioId = item.deviceId
-						}
-						if(item.kind === 'videoinput') {
-							this.videoId = item.deviceId
-						}
-					})
-					console.log(res,this.audioId, this.videoId)
 				})
-				
 			},
+			
 			async joinRoom() {
 				
 				// 获取token
@@ -279,13 +296,37 @@
 				// 加入房间
 				await this.myRTC.joinRoomWithToken(token)
 				
+				
+				this.myRTC.on("track-add", trackInfoList => {
+					// 房间里有新的 Track 发布
+					this.otherTrackList = trackInfoList.map(info => info.trackId)
+					console.log("new trackInfo", trackInfoList);
+					const n = new Notification('读书郎提示您', {
+						body: '有新的小伙伴加入连麦',
+						tag: 'Readyboy',
+						icon: require('../../assets/tip.png'),
+						timestamp: 2000
+					});
+					this.addTrack(trackInfoList)
+				});
+				
+				this.myRTC.on("track-remove", async trackInfoList => {
+					// 房间里有 Track 取消发布
+					const list = trackInfoList.map(info => info.trackId)
+					await this.myRTC.unsubscribe(list);
+					console.log('取消订阅成功')
+				});
+					
+				
+				
+				
 				// 开启本地摄像头
 				console.log('open',this.audioId,  this.videoId)
 				const localTracks = await QNRTC.deviceManager.getLocalTracks({
-// 					audio: {
-// 						enabled: true,
-// 						tag: "audio"
-// 					},
+					audio: {
+						enabled: true,
+						tag: "audio"
+					},
 					
 					video: {
 						enabled: true,
@@ -301,6 +342,46 @@
 				})
 				this.getDeskCapture(localTracks)
 			},
+			
+			async addTrack(trackInfoList) {
+				const tracks = await this.myRTC.subscribe(trackInfoList.map(info => info.trackId))
+				var track
+				for(track of tracks) {
+					if(track.info.kind === 'video') {
+						track.play(this.$refs.other)
+						let videos = this.$refs.other.getElementsByTagName('video')
+						for(var item of videos) {
+							item.style = "width: 250px;height: 190px;margin-bottom: 7px; position: relative"
+							let oDiv = document.createElement('div')
+							oDiv.classList.add('other__close')
+							item.append(oDiv)
+						}
+					} else if(track.info.kind === 'audio') {
+						track.play(this.$refs.audio)
+					}
+				}
+			},
+			
+			close() {
+				if(this.isClose) return
+				this.isClose = true
+				let oVideo = this.$refs.other.getElementsByTagName('video')[0]
+				if(!oVideo) {
+					this.isClose = false
+					return
+				}
+				oVideo.addEventListener('animationend', async () => {
+					oVideo.parentNode.removeChild(oVideo)
+					if(this.otherTrackList) {
+						await this.myRTC.unsubscribe(this.otherTrackList)
+						console.log('取消订阅成功')
+						this.isClose = false
+					}
+				})
+				oVideo.classList.add('leaveOut')
+			},
+			
+			
 				
 			openPPT() {
 				this.ppt_url = `https://view.officeapps.live.com/op/embed.aspx?src=https://www.cxzweb.club/api/ppt/111.pptx`
@@ -360,13 +441,47 @@
 		cursor: pointer;
 	}
 	
-	.foreign__local{
+	
+	
+	.video__box {
 		width: 250px;
-		height: 190px;
+		height: calc(100% - 25px);
 		position: absolute;
 		right: 0px;
 		top: 0px;
+		display: flex;
+		flex-direction: column;
+		z-index: 99999;
 	}
+	
+	.foreign__local {
+		width: 250px;
+		height: 190px;
+		margin-bottom: 7px;
+	}
+	
+	
+	.other__box{
+		
+		display: flex;
+		flex-direction: column;
+		justify-content: flex-start;
+		align-items: flex-start;
+		position: relative;
+	
+	}
+	.other__box::-webkit-scrollbar {
+		display: none;
+	}
+	
+	.other__box .other__video {
+		
+		width: 250px;
+		height: 190px;
+		margin-bottom: 7px;
+	}
+	
+
 	
 	
 	iframe{
@@ -527,6 +642,41 @@
 		width: 260px;
 		height: 146px;
 		background-color: grey;
+	}
+	
+	.audio {
+		visibility: hidden;
+	}
+	
+	
+
+.other__close{
+		position: absolute;
+		right: 6px;
+		top: 4px;
+		background-image: url(./asserts/close2.svg);
+		width: 18px;
+		height: 18px;
+		background-size: contain;
+		background-repeat: no-repeat;
+		z-index: 9999;
+		cursor: pointer;
+		opacity: 0;
+		transition: all ease-in .2s; 
+	}
+	
+	.other__close:active {
+		background-image: url(./asserts/close3.svg);
+	}
+	
+	.other__box:hover  .other__close{
+		opacity: 1;
+	}
+	
+	.other__box video{
+		width: 200px;
+		height: 170px;
+		background-color: white;
 	}
 	
 </style>

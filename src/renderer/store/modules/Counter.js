@@ -1,20 +1,22 @@
 const state = {
-  main: 0
+  token: ''
 }
 
 const mutations = {
-  DECREMENT_MAIN_COUNTER (state) {
-    state.main--
-  },
-  INCREMENT_MAIN_COUNTER (state) {
-    state.main++
-  }
+	SET_MAIN_TOKEN (state, token) {
+		state.token = token
+	}
 }
 
 const actions = {
-  someAsyncTask ({ commit }) {
+  setToken ({ commit }, token) {
     // do something async
-    commit('INCREMENT_MAIN_COUNTER')
+		console.log(token)
+		return new Promise((resolve, reject) => {
+			commit('SET_MAIN_TOKEN', token)
+			resolve()
+		})
+    
   }
 }
 
