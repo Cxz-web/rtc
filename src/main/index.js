@@ -28,13 +28,12 @@ let mainWindow
 let liveWindow
 let handleWindow
 
-const screenHandle = {}
+let screenHandle = {}
 
 let full = false;
 
 
 ipcMain.on('system-event', (event, arg) => {
-	console.log(arg.win)
 	let dom = screenHandle[arg.win]
 	if(arg.handle === 'small') {
 		full = false
@@ -92,7 +91,7 @@ function createWindow () {
 	n.show()
 	
 	screenHandle.login = mainWindow
-  mainWindow.loadURL(winURL)
+	mainWindow.loadURL(winURL)
 	
 	// mainWindow.loadFile(path.resolve(__dirname, './index.html'))
   mainWindow.on('closed', () => {
@@ -159,10 +158,10 @@ function createHandle(id) {
 app.on('ready', createWindow)
 
 app.on('window-all-closed', () => {
-	console.log(123)
-  if (process.platform !== 'darwin') {
-    app.quit()
-  }
+	app.quit()
+//   if (process.platform !== 'darwin') {
+//     
+//   }
 })
 
 app.on('activate', () => {

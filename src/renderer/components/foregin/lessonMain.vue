@@ -76,6 +76,7 @@
 		width: 100%;
 		height: 100%;
 		background-color: white;
+		transform: translate(0,0,0);
 	}
 	
 	@keyframes lessonIn{

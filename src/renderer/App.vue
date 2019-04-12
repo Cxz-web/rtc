@@ -158,6 +158,18 @@
 			opacity: 0.6;
 		}
 	}
+	
+	.other__live {
+		animation: ohterLive 1.3s ease-in-out forwards;
+		transform-origin: top right;
+	}
+	
+	@keyframes ohterLive{
+		to{
+			transform: scale(1);
+			opacity: 1;
+		}
+	}
 
 
 	/* CSS */

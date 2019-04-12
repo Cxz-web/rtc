@@ -124,6 +124,7 @@
 		flex-direction: column;
 		box-sizing: border-box;
 		padding-top: 60px;
+		transform: translateZ(0);
 
 	}
 
@@ -211,11 +212,11 @@
 	
 	@keyframes in{
 		from{
-			transform: translate(-10px, -10px);
+			transform: translate(-10px, -10px, 0);
 			opacity: 0;
 		}
 		to{
-			transform: translate(0, 0);
+			transform: translate(0, 0, 0);
 			opacity: 1;
 		}
 	}

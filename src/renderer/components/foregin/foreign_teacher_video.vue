@@ -57,7 +57,9 @@
 			return {
 				ppt_url: null,
 				myRTC: null,
-				roomId: '01201903181114562641',
+// 				01201902181715579980
+// 				01201903181114562641
+				roomId: '01201902181716009999',
 				live: null,
 				audioId: null,
 				videoId: null,
@@ -98,7 +100,7 @@
 				this.$refs.myCanvas.height = document.body.clientHeight - 25;
 			}
 			this.$store.dispatch('setLessonId', this.roomId)
-// 			console.log(QNRTC.deviceManager.deviceInfo)
+			
 // 			QNRTC.deviceManager.deviceInfo.forEach((item) => {
 // 				if(item.kind === 'videoinput') {
 // 					this.videoId = item.deviceId
@@ -122,6 +124,9 @@
 				if(this.camera) {
 					return
 				}
+				// 本地测试
+				// this.audioId = QNRTC.deviceManager.deviceInfo[4].deviceId
+				console.log(QNRTC.deviceManager.deviceInfo, this.audioId)
 				QNRTC.deviceManager.deviceInfo.forEach( (item) => {
 					
 				})
@@ -243,7 +248,6 @@
 					ctx.lineTo(e.pageX, e.pageY)
 					ctx.stroke()
 					/* src=canvas.toDataURL("image/png") ; */
-					// console.log(src)
 				}
 				this.$refs.myCanvas.onmouseup = (e) => {
 					this.$refs.myCanvas.onmousemove = null;
@@ -326,6 +330,7 @@
 					audio: {
 						enabled: true,
 						tag: "audio"
+						// deviceId: this.audioId
 					},
 					
 					video: {
@@ -338,6 +343,10 @@
 				localTracks.forEach((item) => {
 					if(item.info.tag === 'video') {
 						item.play(localDom)
+						let myVideo =  localDom.getElementsByTagName('video')[0]
+						myVideo.style = 'transform: scale(0);opacity: 0.6;width:100%;height:100%;'
+						myVideo.classList.add('other__live')
+						console.log('other')
 					}
 				})
 				this.getDeskCapture(localTracks)
@@ -351,7 +360,8 @@
 						track.play(this.$refs.other)
 						let videos = this.$refs.other.getElementsByTagName('video')
 						for(var item of videos) {
-							item.style = "width: 250px;height: 190px;margin-bottom: 7px; position: relative"
+							item.style = "width: 250px;height: 190px;margin-bottom: 7px; position: relative;transform: scale(0);opacity: 0.6;width:100%;height:100%;"
+							item.classList.add('other__live')
 							let oDiv = document.createElement('div')
 							oDiv.classList.add('other__close')
 							item.append(oDiv)
@@ -392,6 +402,7 @@
 
 <style scoped>
 	.foreign {
+		transform: translateZ(0);
 		width: 100%;
 		height: 100%;
 		position: relative;
@@ -407,12 +418,12 @@
 	
 	@keyframes foreIn{
 		from{
-			transform: scale(0);
+			transform: scale(0) translateZ(0);
 			opacity: 0.6;
 		}
 		
 		to{
-			transform: scale(1.0);
+			transform: scale(1.0) translateZ(0);
 			opacity: 1;
 		}
 	}
@@ -457,12 +468,11 @@
 	.foreign__local {
 		width: 250px;
 		height: 190px;
-		margin-bottom: 7px;
+		margin-bottom: 1px;
 	}
 	
 	
 	.other__box{
-		
 		display: flex;
 		flex-direction: column;
 		justify-content: flex-start;
