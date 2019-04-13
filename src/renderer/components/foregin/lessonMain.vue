@@ -76,16 +76,17 @@
 		width: 100%;
 		height: 100%;
 		background-color: white;
-		transform: translate(0,0,0);
+		transform: translate3d(0,0,0);
+		will-change: transform; 
 	}
 	
 	@keyframes lessonIn{
 		from{
-			transform: translate(-5px, -10px);
+			transform: translate3d(-5px, -10px, 0);
 			opacity: 0;
 		}
 		to{
-			transform: translate(0, 0);
+			transform: translate(0, 0, 0);
 			opacity: 1;
 		}
 	}
@@ -100,7 +101,6 @@
 		display: flex;
 		padding-left: 10px;
 		margin-bottom: 3px;
-		
 	}
 	
 	.title__icon{

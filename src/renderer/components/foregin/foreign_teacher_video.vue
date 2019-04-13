@@ -130,7 +130,7 @@
 				QNRTC.deviceManager.deviceInfo.forEach( (item) => {
 					
 				})
-				this.notice()
+				
 				this.camera = true
 				this.joinRoom()
 			},
@@ -322,31 +322,33 @@
 				});
 					
 				
-				
+				console.log(123)
 				
 				// 开启本地摄像头
 				console.log('open',this.audioId,  this.videoId)
 				const localTracks = await QNRTC.deviceManager.getLocalTracks({
-					audio: {
-						enabled: true,
-						tag: "audio"
-						// deviceId: this.audioId
-					},
-					
+// 					audio: {
+// 						enabled: true,
+// 						tag: "audio"
+// 						
+// 					},
+					// deviceId: this.audioId
 					video: {
 						enabled: true,
 						tag: "video"
 					}
 				})
 				let localDom = document.getElementById('local')
-				
+				this.notice()
 				localTracks.forEach((item) => {
 					if(item.info.tag === 'video') {
 						item.play(localDom)
 						let myVideo =  localDom.getElementsByTagName('video')[0]
-						myVideo.style = 'transform: scale(0);opacity: 0.6;width:100%;height:100%;'
-						myVideo.classList.add('other__live')
-						console.log('other')
+						myVideo.style = 'transform: scale(0);opacity: 0.6;width:100%;height:100%;will-change: transform;'
+						setTimeout(() => {
+							myVideo.classList.add('other__live')
+						}, 1000)
+						
 					}
 				})
 				this.getDeskCapture(localTracks)
@@ -360,11 +362,13 @@
 						track.play(this.$refs.other)
 						let videos = this.$refs.other.getElementsByTagName('video')
 						for(var item of videos) {
-							item.style = "width: 250px;height: 190px;margin-bottom: 7px; position: relative;transform: scale(0);opacity: 0.6;width:100%;height:100%;"
-							item.classList.add('other__live')
+							item.style = "width: 250px;height: 190px;margin-bottom: 7px; position: relative;transform: scale(0);opacity: 0.6;width:100%;height:100%;will-change: transform;"
 							let oDiv = document.createElement('div')
 							oDiv.classList.add('other__close')
 							item.append(oDiv)
+							setTimeout(() => {
+								item.classList.add('other__live')
+							}, 1000)
 						}
 					} else if(track.info.kind === 'audio') {
 						track.play(this.$refs.audio)
@@ -395,6 +399,7 @@
 				
 			openPPT() {
 				this.ppt_url = `https://view.officeapps.live.com/op/embed.aspx?src=https://www.cxzweb.club/api/ppt/111.pptx`
+				
 			}
 		}
 	}
@@ -409,6 +414,7 @@
 		background-color: black;
 		animation: foreIn ease-out forwards  1.4s;
 		overflow: hidden;
+		will-change: transform; 
 	}
 	
 	.myFrame{

@@ -365,7 +365,7 @@
 		padding: 10px;
 		animation: handle ease-in .3s forwards;
 		user-select: none;
-		
+		will-change: transform;
 	}
 	
 	@keyframes  handle{

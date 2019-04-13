@@ -124,8 +124,7 @@
 		flex-direction: column;
 		box-sizing: border-box;
 		padding-top: 60px;
-		transform: translateZ(0);
-
+		will-change: transform; 
 	}
 
 	.login__logo {
@@ -212,11 +211,11 @@
 	
 	@keyframes in{
 		from{
-			transform: translate(-10px, -10px, 0);
+			transform: translate(-10px, -10px);
 			opacity: 0;
 		}
 		to{
-			transform: translate(0, 0, 0);
+			transform: translate(0, 0);
 			opacity: 1;
 		}
 	}
