@@ -1,7 +1,7 @@
 <template>
 	<div class="foreign">
 		<div class="foreign__ppt" v-if="ppt_url">
-			<iframe :src="ppt_url"  frameborder="0" width="100%" height="100%" ref="iframe" class="myFrame"></iframe>
+			<iframe :src="ppt_url"  frameborder="0" width="100%" height="100%" ref="iframe" class="myFrame" style="opacity: 0.4;"></iframe>
 		</div>
 		<!-- <div class="foreign_btn" v-if="!ppt_url" @click="openPPT">open</div> -->
 		
@@ -399,6 +399,13 @@
 				
 			openPPT() {
 				this.ppt_url = `https://view.officeapps.live.com/op/embed.aspx?src=https://www.cxzweb.club/api/ppt/111.pptx`
+				
+				this.$nextTick(() => {
+					this.$refs.iframe.addEventListener('load', ()=>{
+						console.log('加载完成')
+						this.$refs.iframe.style = ''
+					})
+				})
 				
 			}
 		}
