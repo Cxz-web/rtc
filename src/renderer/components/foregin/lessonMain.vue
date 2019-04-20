@@ -59,7 +59,8 @@
 				});
 			},
 			showDetails() {
-				this.show = true
+				// this.show = true
+				this.$router.push('/live/rtc')
 			},
 			
 			toLive() {

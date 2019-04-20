@@ -8,7 +8,7 @@
 	export default {
 		name: 'live-page',
 		created() {
-			console.log(123,this.$store.state.token)
+			
 		}
 	}
 </script>

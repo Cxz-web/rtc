@@ -57,9 +57,9 @@
 			return {
 				ppt_url: null,
 				myRTC: null,
-// 				01201902181715579980
+// 				01201903291646490034
 // 				01201903181114562641
-				roomId: '01201902181716009999',
+				roomId: '01201904151136152531',
 				live: null,
 				audioId: null,
 				videoId: null,
@@ -100,7 +100,7 @@
 				this.$refs.myCanvas.height = document.body.clientHeight - 25;
 			}
 			this.$store.dispatch('setLessonId', this.roomId)
-			
+			console.log(QNRTC.deviceManager.deviceInfo)
 // 			QNRTC.deviceManager.deviceInfo.forEach((item) => {
 // 				if(item.kind === 'videoinput') {
 // 					this.videoId = item.deviceId
@@ -327,11 +327,11 @@
 				// 开启本地摄像头
 				console.log('open',this.audioId,  this.videoId)
 				const localTracks = await QNRTC.deviceManager.getLocalTracks({
-// 					audio: {
-// 						enabled: true,
-// 						tag: "audio"
-// 						
-// 					},
+					audio: {
+						enabled: true,
+						tag: "audio"
+						
+					},
 					// deviceId: this.audioId
 					video: {
 						enabled: true,
@@ -339,6 +339,7 @@
 					}
 				})
 				let localDom = document.getElementById('local')
+				
 				this.notice()
 				localTracks.forEach((item) => {
 					if(item.info.tag === 'video') {
@@ -350,6 +351,8 @@
 						}, 1000)
 						
 					}
+					// 新加的地方
+					item.setMaster(true)
 				})
 				this.getDeskCapture(localTracks)
 			},

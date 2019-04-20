@@ -1,7 +1,7 @@
 <template>
 	<div id="app">
-		<div class="app__move" ></div>
-		<div class="app__wrap no-drag" ref="move" :class="{'app__wrap--move': !showMove}">
+		<div class="app__move" v-if="canDrag"></div>
+		<div class="app__wrap no-drag" ref="move" :class="{'app__wrap--move': !showMove}" >
 			<div class="app__btn btn1" @click="handle('close')"></div>
 			<div class="app__btn btn2" @click="handle('small')"></div>
 			<div class="app__btn btn3" @click="handle('big')"></div>
@@ -23,13 +23,20 @@
 			}
 		},
 		computed: {
+			canDrag() {
+				const path = this.$router.currentRoute.fullPath
+				return path.includes('edit')  ? false : true 
+			},
 			showMove() {
-				return this.$router.currentRoute.fullPath.includes('liveHandle') ? false : true 
+				const path = this.$router.currentRoute.fullPath
+				// return this.$router.currentRoute.fullPath.includes('liveHandle') ? false : true 
+				return path.includes('liveHandle')  ? false : true 
 			}
 		},
 		created() {
 			if (window.location.href.includes('myLive')) {
 				this.$router.push('/live/lessonMain')
+				// this.$router.push('/live/edit')
 			}
 			if (window.location.href.includes('myHandle')) {
 				this.$router.push('/live/liveHandle')

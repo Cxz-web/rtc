@@ -36,6 +36,11 @@ export default new Router({
 				path: 'rtc',
 				name: 'live-rtc',
 				component: require('@/components/foregin/foreign_teacher_video').default
+			},
+			{
+				path: 'edit',
+				name: 'edit-ppt',
+				component: require('@/components/foregin/EditPPT').default
 			}
 		]
 	},

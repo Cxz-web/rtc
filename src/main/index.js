@@ -5,6 +5,8 @@ import { app, BrowserWindow, ipcMain, Notification } from 'electron'
  * https://simulatedgreg.gitbooks.io/electron-vue/content/en/using-static-assets.html
  */
 
+require('electron-debug')({ showDevTools: true })
+
 
 app.setAppUserModelId('8562871')
 
@@ -66,11 +68,14 @@ function createWindow () {
     height: 700,
     useContentSize: true,
     width: 380,
-		frame: false ,
-		maxWidth: 380,
-		maxHeight: 700,
-		resizable: false,
-		transparent: true
+	frame: false ,
+	maxWidth: 380,
+	maxHeight: 700,
+	resizable: false,
+	transparent: true,
+	webPreferences : {
+		nodeIntegration: true
+	}
   })
 	// mainWindow.webContents.openDevTools();
 	
@@ -103,16 +108,16 @@ function createWindow () {
 // 视频窗口
 function createLive() {
 	liveWindow = new BrowserWindow({
-	  height: 720,
-	  useContentSize: true,
-	  width: 1280,
+		height: 720,
+		useContentSize: true,
+		width: 1280,
 		frame: false ,
 		maxWidth: 1280,
 		maxHeight: 720,
 		resizable: false,
 		transparent: true,
 		webPreferences: {
-			webSecurity: false
+			nodeIntegration: true
 		}
 	})
 	screenHandle.live = liveWindow
@@ -139,7 +144,7 @@ function createHandle(id) {
 		resizable: false,
 		transparent: true,
 		webPreferences: {
-			webSecurity: false
+			nodeIntegration: true
 		}
 	})
 	screenHandle.handle = handleWindow

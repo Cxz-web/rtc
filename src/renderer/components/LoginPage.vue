@@ -11,7 +11,7 @@
 <script>
 	import axios from 'axios'
 	import qs from 'qs'
-	import md5 from 'js-md5'
+	
 	import { mapState, mapActions } from "vuex"
 	
 	const { ipcRenderer } = require('electron')
@@ -29,6 +29,7 @@
 			}
 		},
 		mounted() {
+			console.log(123)
 			this.$refs.login.classList.add('in')
 		},
 		methods: {
