@@ -29,7 +29,7 @@ export default new Router({
 			{
 				path: 'liveHandle',
 				name: 'live-handle',
-				component: require('@/components/foregin/liveHandle').default
+				component: require('@/components/foregin/NewHandle').default
 				
 			},
 			{
@@ -41,6 +41,11 @@ export default new Router({
 				path: 'edit',
 				name: 'edit-ppt',
 				component: require('@/components/foregin/EditPPT').default
+			},
+			{
+				path: 'newRtc',
+				name: 'new-rtc',
+				component: require('@/components/foregin/newForeign').default
 			}
 		]
 	},

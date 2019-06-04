@@ -7,7 +7,7 @@ import { app, BrowserWindow, ipcMain, Notification } from 'electron'
 
 // require('electron-debug')({ showDevTools: true })
 
-require('electron-debug')({ showDevTools: true })
+
 app.setAppUserModelId('8562871')
 
 if (process.env.NODE_ENV !== 'development') {
@@ -47,19 +47,12 @@ ipcMain.on('system-event', (event, arg) => {
 	}
 	if(arg.handle === 'close') {
 		full = false
-		if(dom) {
-			dom.close()
-		}
-		
+		dom.close()
 	}
 	if(arg.handle === 'big') {
 		full = !full
 		dom.setFullScreen(full)
 	}
-})
-
-ipcMain.on('push-state', (event, arg) => {
-	liveWindow.webContents.send('current-state', arg)
 })
 
 
@@ -91,6 +84,7 @@ function createWindow () {
 	// mainWindow.webContents.openDevTools();
 	
 	ipcMain.on('close-login', (event, arg) => {
+	  console.log(arg) // prints "ping"
 		createLive()
 		mainWindow.close()
 		
@@ -111,7 +105,6 @@ function createWindow () {
 	// mainWindow.loadFile(path.resolve(__dirname, './index.html'))
   mainWindow.on('closed', () => {
     mainWindow = null
-	screenHandle.login = null
   })
 }
 
@@ -131,8 +124,6 @@ function createLive() {
 			nodeIntegration: true
 		}
 	})
-	
-	
 	screenHandle.live = liveWindow
 	liveWindow.loadURL(winURL + '?myLive=1')
 	liveWindow.on('closed', () => {
@@ -140,7 +131,6 @@ function createLive() {
 		if(handleWindow) {
 			handleWindow.close()
 		}
-		screenHandle.live = null
 	})
 }
 
@@ -161,13 +151,11 @@ function createHandle(id) {
 			nodeIntegration: true
 		}
 	})
-
 	screenHandle.handle = handleWindow
 	handleWindow.loadURL(winURL + `?myHandle=${id}`)
 	handleWindow.focus()
 	handleWindow.on('closed', () => {
 	  handleWindow = null
-	  screenHandle.handle = null
 	})
 	
 	

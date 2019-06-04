@@ -2,24 +2,25 @@
 	<div id="app">
 		<div class="app__move" v-if="canDrag"></div>
 		<div class="app__wrap no-drag" ref="move" :class="{'app__wrap--move': !showMove}" >
-			<div class="app__btn btn1" @click="handle('close')"></div>
 			<div class="app__btn btn2" @click="handle('small')"></div>
-			<div class="app__btn btn3" @click="handle('big')"></div>
+			<div class="app__btn btn1" @click="handle('close')"></div>
+			<!-- <div class="app__btn btn3" @click="handle('big')"></div> -->
 		</div>
 		<router-view></router-view>
 	</div>
 </template>
 
 <script>
-	const {
-		ipcRenderer
-	} = require('electron')
-
+	const { ipcRenderer } = require('electron')
+	const  os  = require('os')
+	// const getMac = require('getmac')
 	export default {
 		name: 'my-project',
 		data() {
 			return {
-				win: ''
+				win: '',
+				macAddress: null,
+				pushState: false
 			}
 		},
 		computed: {
@@ -41,8 +42,12 @@
 			if (window.location.href.includes('myHandle')) {
 				this.$router.push('/live/liveHandle')
 			}
+			
 			this.judegeWin()
+			// this.verifyDeviceAddress()
 		},
+		
+		
 	
 
 		methods: {
@@ -59,17 +64,41 @@
 
 			},
 			handle(handle) {
+				if(handle === 'close') {
+					if(this.$route.fullPath.includes('/live/newRtc')) {
+						const state = JSON.parse(localStorage.getItem('pushState'))
+						if(state) {
+							this.$message({
+								message: 'Only after closing the room can it be operated.',
+								type: 'error'
+							})
+							
+							
+							return
+						}
+						ipcRenderer.send('system-event', {
+							win: 'handle',
+							handle: 'close'
+						})
+						this.$router.go(-1)
+						return 
+					}
+				}
+				
 				ipcRenderer.send('system-event', {
 					win: this.win,
 					handle: handle
 				})
 			},
-			listen() {
-				console.log(123)
-
-				this.$refs.move.addEventListener('mouseenter', () => {
-					console.log(123)
-
+			
+			verifyDeviceAddress() {
+				// let networkInterfaces = os.networkInterfaces()
+				getMac.getMac((err, macAddress) => {
+					if (err)  throw err
+					this.macAddress = macAddress
+					if(false) {
+						ipcRenderer.send('not-certified')
+					}
 				})
 			}
 		}
@@ -77,6 +106,7 @@
 </script>
 
 <style>
+	@import url("../animate.min.css");
 	body::-webkit-scrollbar {
 		display: none;
 	}
@@ -154,12 +184,13 @@
 		background-color: #3bc151;
 	}
 	
-	.leaveOut {
-		animation: leaveOut ease-in-out 1s backwards;
-		transform-origin: top right;
-	}
+
 	
 	@keyframes leaveOut{
+		from{
+			transform: scale(1);
+			opacity: 1;
+		}
 		to{
 			transform: scale(0);
 			opacity: 0.6;
@@ -168,10 +199,17 @@
 	
 	.other__live {
 		animation: ohterLive 1.3s ease-in-out forwards;
-		transform-origin: top right;
+		transform-origin: top left;
+	}
+	.my__live{
+		animation: ohterLive 1.3s ease-in-out forwards;
+		transform-origin: center center;
 	}
 	
 	@keyframes ohterLive{
+		from{
+			transform: scale(0);
+		}
 		to{
 			transform: scale(1);
 			opacity: 1;

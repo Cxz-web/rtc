@@ -28,19 +28,17 @@
 						<span> {{ videoStatusTip }} </span>
 					</div>
 				</div>
-				
 			</div>
 			
+			<div class="stu__name"> Online students: {{ this.count }} </div>
+			
+			
+	
+		</div>
 		
-			<!-- <div class="packet__wrap" v-show="showPacket">
-				<div class="packet__box">
-					<div class="packet__header"><div class="packet__close" @click="closePacket"></div></div>
-					
-					<p class="packet__tip" v-else> Start giving out red packets?</p>
-					<div class="packet__btn" @click="packetBtn" :class="{'packet__bac': packetBtnTip==='Stop giving out red packets'}">{{ packetBtnTip }}</div>
-				</div>
-			</div> -->
-		
+		<div class="socket__error" v-show="showError"> 
+			<div class="socket__btn" @click="reloadSocket"></div>
+			<div class="socket__tip">Network error, please reconnect!!</div>
 		</div>
 	</div>
 </template>
@@ -49,16 +47,18 @@
 	import axios from 'axios'
 	import qs from 'qs'
 	import { mapState } from "vuex"
+	import JudgeState from '../../utils/judge.js'
+	
 	let indexLoading = null
 	const { ipcRenderer } = require('electron')
 	// const baseUrl = 'http://api.double-teacher-test.cs.dreamdev.cn'
 	const baseUrl = 'http://api.double-teacher.dream.cn'
 	let Socket = null;
+	let socketURL = null;
 	// http://us-east.dteacher.readboy.com/api
 	// http://us-east.dteacher.readboy.com/rtn
-	const stateType = {
-		
-	}
+	let judge = new JudgeState()
+	
 	
 	
 	export default {
@@ -102,16 +102,12 @@
 				canQuery: true,
 				initId: null,
 				init: true,
-				count: 1,
-				canHandle: true
+				count: 0,
+				canHandle: true,
+				showError: false
 			}
 		},
-		created() {
-			this.TOKEN = this.$store.state.token
-			this.lessonid = this.$store.state.lessonId
-			this.getInitState()
-			// this.webSocket()
-		},
+		
 		watch: {
 			isGivingPacket(newValue) {
 				if(newValue === 0) {
@@ -170,10 +166,15 @@
 			
 		},
 		
+		created() {
+			this.TOKEN = this.$store.state.token
+			this.lessonid = this.$store.state.lessonId
+			this.getInitState()
+			this.webSocket()
+		},
 		
 		mounted() {
-			this.setIntervalInit()
-			// this.webSocket()
+			
 			indexLoading = this.$loading({
 			      lock: true,
 			      text: 'waiting...',
@@ -182,31 +183,131 @@
 			})
 		},
 		
+		beforeDestroy() {
+			clearInterval(this.id)
+			clearInterval(this.initId)
+		},
+		
 		methods: {
 	
-			webSocket() {
+			webSocket(loading) {
 				
-				let testApi = `ws://us-east.dteacher.readboy.com/api/v2/webapi/roster/connect?lesson_id=${this.lessonid}&token=${this.TOKEN}`
-			
-				Socket = new WebSocket(testApi)
+				let url = 'ws://api.double-teacher.dream.cn'
+				let foreign = 'ws://us-east.dteacher.readboy.com'
+				socketURL = foreign + `/api/v2/webapi/roster/connect?lesson_id=${this.lessonid}&token=${this.TOKEN}`
+				
+				Socket = new WebSocket(socketURL)
 				Socket.onopen = () => {
 					console.log('已创建连接')
+					this.showError = false
+					if(loading) {
+						this.getInitState()
+						loading.close()
+					}			
 				}
 				Socket.onmessage = (evt) => {
 					let data = JSON.parse(evt.data)
-					console.log('收到数据', data)
+					this.getSocketData(data)
 				}
 				Socket.onclose  = (evt) => {
 					console.log('关闭')
+					this.showError = true
+					if(loading) {
+						loading.close()
+					}
 				}
 				Socket.onerror = (msg) => {
 					console.log(msg, '错误')
+					if(loading) {
+						loading.close()
+					}
+				}
+
+			},
+			
+			
+			testSocket() {
+				setInterval(() => {
+					
+				}, 2000)
+				Socket.send('msg')
+			},
+			
+			// 
+			reloadSocket() {
+				let loading = this.$loading({
+				      lock: true,
+				      text: 'Reconnecting...',
+				      spinner: 'el-icon-loading',
+				      background: 'rgba(0, 0, 0, 0.7)'
+				})
+				this.webSocket(loading)
+			},
+			
+			getSocketData(data) {
+				let type = data.type
+				switch (type){
+					// 推流情况
+					case 101:
+						this.initRoomBtnState(data.data.data)
+						break;
+					// 在线人数
+					case 203:
+						this.initStudentsNum(data.content)
+						break;
+					//红包
+					case 503:
+						this.initPacketState(data.data)
+						break;
+					// 连麦
+					case 505:
+						this.initVideoBtnState(data.data)
+						break;
+				}
+			},
+			
+			// 实时更房间开启和流打开按钮状态
+			
+			
+			initRoomBtnState(state) {
+				console.log(state)
+				if(state[0].isopen) {
+					this.$refs.btn1.classList.add('handle__btn--active')
+					this.btn1_type = 0
+				}else{
+					this.$refs.btn1.classList.remove('handle__btn--active')
+					this.btn1_type = 1
+					this.packetNum = 0
 				}
 				
-				
-				
-				
+				if(state[1].isopen) {
+					this.$refs.btn2.classList.add('handle__btn--active')
+					this.btn2_type = 0
+				}else {
+					this.$refs.btn2.classList.remove('handle__btn--active')
+					this.btn2_type = 1
+				}
 			},
+			
+			
+			// 实时获取在线学生数量
+			initStudentsNum(data) {
+				this.count = data.F_online_count
+			},
+			
+			// 实时获取连麦按钮状态
+			initVideoBtnState(data) {
+				this.applyId = data.interactive_id // 初始化连麦id 
+				this.isConnected = data.interactive_state // 初始化连麦按钮状态
+			},
+			
+			// 实时获取红包按钮状态
+			initPacketState(data) {
+				this.packetState = data.interactive_state // 红包状态				
+				this.packetId = this.packetState == 1 ? data.interactive_id : null
+				this.packetNum = this.packetState == 1 ? this.packetNum + 1 : this.packetNum	
+			},
+			
 			
 			
 			setHandle() {
@@ -216,38 +317,8 @@
 				}, 25000)
 			},
 			
+
 			
-			// 打开红包面板
-			openPacketBox() {
-				if(this.isConnected === 1) {
-					this.$message({
-						type: 'error',
-						message: 'Video call, no other operation allowed!'
-					})
-					return
-				}
-				
-				
-				if(this.packetNum >= this.packetLimit) {
-					this.$message({
-						type: 'error',
-						message: 'A maximum of five red packet can be handed out per class!'
-					})
-					return
-				}
-				
-				
-				this.showPacket = true
-			},
-			
-			closePacket() {
-				this.showPacket = false
-			},
-			
-			beforeDestroy() {
-				clearInterval(this.id)
-				clearInterval(this.initId)
-			},
 			
 			packetBtn() {
 				// 没有发红包的状态
@@ -260,22 +331,15 @@
 			},
 			// 开始发红包
 			async giveRedPacket() {
-				if(this.isConnected === 1) {
-					this.$message({
-						type: 'error',
-						message: 'Please close the video call  before starting red packet!'
-					})
-					return
-				}
+				let can = judge.initState()
+			     .isVideoCall(this.isConnected)
+				 .isTimeUp(this.canHandle)
+				 .isHasStudents(this.count)
+				 .isEngough(this.packetNum < 5)
+				 .judgeRestult()
+				 
 				
-				
-				if(!this.canHandle) {
-					this.$message({
-						type: 'error',
-						message: 'Operation is allowed after 20 seconds'
-					})
-					return 
-				}
+				if(!can) return
 				
 				
 				this.setHandle()
@@ -286,20 +350,11 @@
 				      spinner: 'el-icon-loading',
 				      background: 'rgba(0, 0, 0, 0.7)'
 				})
-				try{
-					await this.getStudentNum()
-				}catch(e){
-					this.$message({
-						type: 'error',
-						message: 'Netwrok error, please try again'
-					})
-					loading.close()
-					return
-				}
+				
 				
 				
 				const url = this.apiUrl + '/v2/webapi/lesson/redpacket/publish'
-				this.count = this.count === 0 ? 1 : this.count
+			
 				this.receivedPacker = 0
 				let params = {
 					lesson_id: this.lessonid,
@@ -312,18 +367,11 @@
 				this._post(url, params).then((res) => {
 					const data = res.data
 					loading.close()
-					
 					if(data.F_responseNo === 10000) {
-						this.packetId = data.redpacket_id
 						clearInterval(this.id)
 						this.id = setInterval(() => {
 							this.queryPacket()
 						}, 3000)
-					}else if(data.F_responseNo === 10114) {
-						this.$message({
-							type: 'error',
-							message: 'The red packets have been handed out！'
-						})
 					}
 					
 				}).catch((err) => {
@@ -371,7 +419,6 @@
 				})
 				
 				this._post(url, params).then((res) => {
-					this.packetId = null
 					loading.close()
 					clearInterval(this.id)
 				})
@@ -403,9 +450,9 @@
 					// console.log('直播信息', this.liveInfo)
 					// console.log('直播状态', this.liveState)
 					// console.log(this.liveBtnState)
-					this.applyId = this.interactiveState.rtn_apply_id // 初始化连麦id 
-					this.isConnected = this.interactiveState.rtn_apply_state // 初始化
 					this.initLiveBtnState(this.liveBtnState) // 初始化直播和推流的按钮状态
+					
+					this.applyId = this.interactiveState.rtn_apply_id // 初始化连麦id 
 					this.isConnected = this.interactiveState.rtn_apply_state // 初始化连麦按钮状态
 					
 					// 红包相关
@@ -414,8 +461,9 @@
 					
 					
 					this.packetNum = this.interactiveState.red_packet_num // 已发红包数量
-					this.packetLimit = this.interactiveState.red_packet_limit // 红包限制数量
+					this.packetLimit = this.interactiveState.red_packet_limit || 5 // 红包限制数量
 					this.packetId = this.interactiveState.red_packet_id
+					
 					this.init = true
 					if( indexLoading ) {
 						indexLoading.close()
@@ -426,31 +474,18 @@
 				})
 			},
 			
-			setIntervalInit() {
-				this.initId = setInterval(() => {
-					this.getInitState()
-				}, 3000)
-			},
+			
 			
 			// 连麦
 			connectRtn() {
-				if(this.isGivingPacket === 1) {
-					this.$message({
-						type: 'error',
-						message: 'Please close the red packer activity before video call!'
-					})
-					return
-				}
 				
-				if(!this.canHandle) {
-					this.$message({
-						type: 'error',
-						message: 'Operation is allowed after 20 seconds'
-					})
-					return 
-				}
-				
-				
+				const can = judge.initState()
+				 .isPacket(this.isGivingPacket)
+				 .isTimeUp(this.canHandle)
+				 .isHasStudents(this.count)
+				 .judgeRestult()
+
+				if(!can) return				
 				this.connectBtn = false
 				const state = this.isConnected === 0 
 				let loading = this.$loading({
@@ -470,11 +505,9 @@
 								type: 'error',
 								message: 'No student are in the room'
 							})
-							return 
+							 return 
 						}
-						this.applyId = res.data.apply.apply_id
-						this.connectBtn = true
-						this.isConnected = this.isConnected === 0 ? 1 : 0
+						this.connectBtn = true 
 					}).catch((error) => {
 						loading.close()
 						this.$message({
@@ -486,8 +519,6 @@
 					const url = this.apiUrl + `/v2/webapi/apply/close`
 					this._post(url, {lesson_id: this.lessonid, apply_id: this.applyId}).then(res => {
 						loading.close()
-						this.connectBtn = true
-						this.isConnected = this.isConnected === 0 ? 1 : 0
 					}).catch((error) => {
 						loading.close()
 						this.$message({
@@ -501,6 +532,7 @@
 			
 			// 初始化推流， 房间按钮
 			initLiveBtnState(state) {
+				console.log('当前按钮状态：', state)
 				if(state[0].isopen) {
 					this.$refs.btn1.classList.add('handle__btn--active')
 					this.btn1_type = 0
@@ -538,6 +570,13 @@
 					return
 				}
 				
+				let can = judge.initState()
+				 .isVideoCall(this.isConnected)
+				 .isPacket(this.isGivingPacket)
+				 .judgeRestult()
+				if(!can) return
+				
+				
 				
 				this.enable = false
 				let loading = this.$loading({
@@ -553,10 +592,11 @@
 					id: id,
 					type: this[which] === 1 ? 0 : 1
 				}
+				
+				
+				
 				this._post(url, data).then((res) => {
 					this.enable = true
-					this[which] = this[which] === 1 ? 0 : 1
-					e.target.classList.toggle('handle__btn--active')
 					loading.close()
 				}).catch( (err) => {
 					this.enable = true
@@ -945,6 +985,44 @@
 			transform: scale(1);
 			opacity: 1;
 		}
+	}
+	
+	.stu__name{
+		color: #e82f52;
+		text-align: left;
+		padding-inline-start: 20px;
+		font-weight: bold;
+		font-size: 20px;
+	}
+	
+	.socket__error{
+		position: absolute;
+		z-index: 300;
+		width: 100%;
+		height: 100%;
+		background-color: rgba(0, 0, 0, 0.8);
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		flex-direction: column;
+		border-radius: 10px;
+		color: white;
+
+	}
+	
+	.socket__btn{
+		width: 40px;
+		height: 40px;
+		background-image: url(./asserts/reload1.svg);
+		background-repeat: no-repeat;
+		background-size: contain;
+		cursor: pointer;
+		margin-bottom: 10px;
+	
+	}
+	
+	.socket__btn:active{
+		background-image: url(./asserts/reload2.svg);
 	}
 </style>
 

@@ -1,24 +1,21 @@
 <template>
-	<div class="foreign" style="background-color: #444444;">
-		<div class="foreign__ppt" v-if="ppt_url">
-			<iframe :src="ppt_url"  frameborder="0" width="100%" height="100%" ref="iframe" class="myFrame" style="opacity: 0.4;"></iframe>
-		</div>
-		<!-- <div class="foreign_btn" v-if="!ppt_url" @click="openPPT">open</div> -->
+	<div class="foreign" style="background-image: linear-gradient(90deg, #74EBD5 0%, #9FACE6 100%);" ref="foreign">
+		
+		<div class="foreign__logo"></div>
 		
 		
+		<div class="foreign__local" ref="local" id="local"></div>
 		<div class="video__box">
-			<div class="foreign__local" ref="local" id="local"></div>
+			
 			<div class="other__box" ref="other" id="other">
 				<div class="other__close" @click="close"></div>
 			</div>
 		</div>
 		
-		<div class="foreign__audio" ref="audio">
-			
-		</div>
+		<div class="foreign__audio" ref="audio"></div>
 		
 		
-		<div class="ppt__box">
+		<div class="ppt__box" v-if="false">
 			<!-- 画笔 -->
 			<div class="iconfont icon-pen btn ppt__ben" @click="openPen" ref="pen">
 				<div class="color__box" v-show="showPen" >
@@ -31,15 +28,23 @@
 			<!-- 清除所有 -->
 			<div class="iconfont icon-qingchuhuancun btn" :class="{'current__bac': index ===2}" @click="openClear"></div>
 		</div>
-		<div class="paint">
+		
+		
+		<!-- <div class="paint">
 			<canvas class="myCanvas" @mousedown="write($event)" ref="myCanvas"></canvas>
+		</div> -->
+		
+		
+		<!-- <div class="foreign__camera" @click="openCamera"></div> -->
+		
+		
+		<div class="handle__video">
+			<div class="foreign__operation" @click="openHandle" v-show="showHandle"></div>
+			<div class="foreign__audio foreign__audio--none" @click="testAudio" v-show="showHandle" ref="audio"></div>
 		</div>
 		
-		<div class="foreign__operation" @click="openHandle"></div>
-		<div class="foreign__camera" @click="openCamera"></div>
-		
-		<div class="foreign__shade" v-if="ppt_url"></div>
-		
+		<!-- <div class="foreign__shade" v-if="ppt_url"></div> -->
+		<div class="autio" id="audio"></div>
 		<!-- <video  class="test__video" ref="myVideo" id="my"></video> -->
 		
 	</div>
@@ -48,18 +53,18 @@
 <script>
 	import * as QNRTC from "pili-rtc-web"
 	import LiveModel from '../../../model/live.js'
+	import { mapState } from "vuex"
+	let loading = null
 	const {	ipcRenderer, desktopCapturer } = require('electron')
 	// 01201903181114562641
 	// 01201901151300405631
 	export default {
-		name: 'live-rtc',
+		name: 'new-rtc',
 		data() {
 			return {
 				ppt_url: null,
 				myRTC: null,
-// 				01201903291646490034
-// 				01201903181114562641
-				roomId: '01201904151136152531',
+				roomId: '01201905061453289399',
 				live: null,
 				audioId: null,
 				videoId: null,
@@ -80,27 +85,37 @@
 				isFull: false,
 				camera: false,
 				otherTrackList: null,
-				isClose: false
+				isClose: false,
+				tracks: null,
+				showHandle: false,
+				audio: null
 			}
 		},
 		
-		mounted() {
-			this.openPPT()
-			setTimeout(() => {
-				this.$refs.myCanvas.width = document.body.clientWidth;
-				this.$refs.myCanvas.height = document.body.clientHeight - 25;
-			}, 3000)
-			
-			QNRTC.log.setLevel("disable")
-			this.myRTC = new QNRTC.TrackModeSession()
-			this.live = new LiveModel()
-			this.getDevice()
-			window.onresize = () => {
-				this.$refs.myCanvas.width = document.body.clientWidth;
-				this.$refs.myCanvas.height = document.body.clientHeight - 25;
-			}
+		created() {
+			this.roomId = this.$route.query.lessonid
 			this.$store.dispatch('setLessonId', this.roomId)
+		},
+		
+		computed: {
+			...mapState(['rtnUrl', 'apiUrl'])
+		},
+		
+		mounted() {
+			setTimeout(() => {
+				this.start()
+			}, 1000)
+			ipcRenderer.on('current-state', this.pushStateOperation)
+			
+			
+			// setTimeout(() => {
+			// 	this.$refs.myCanvas.width = document.body.clientWidth;
+			// 	this.$refs.myCanvas.height = document.body.clientHeight - 25;
+			// }, 3000)
+			
+			
 			console.log(QNRTC.deviceManager.deviceInfo)
+			
 // 			QNRTC.deviceManager.deviceInfo.forEach((item) => {
 // 				if(item.kind === 'videoinput') {
 // 					this.videoId = item.deviceId
@@ -113,32 +128,143 @@
 			// this.joinRoom()
 		},
 		
-		beforeDestory() {
+		beforeDestroy() {
+			for (const track of this.tracks) {
+				track.release();
+			}
 			this.myRTC.leaveRoom()
+			this.myRTC = null
+			ipcRenderer.removeAllListeners('current-state')
 			document.body.onfullscreenchange = null
 		},
+	
+		
 		
 		methods: {
+			
+			start() {
+				console.log('start')
+				loading = this.$loading({
+				      lock: true,
+				      text: 'Opening Camera...',
+				      spinner: 'el-icon-loading',
+				      background: 'rgba(0, 0, 0, 0.7)'
+				})
+				QNRTC.log.setLevel("disable")
+				this.myRTC = new QNRTC.TrackModeSession()
+				this.live = new LiveModel(this.rtnUrl)
+				this.openCamera()
+				this.getDevice()
+				
+			},
+			
+			
+			pushStateOperation(event, value) {
+				if(value) {
+					this.publish()
+				} else {
+					this.unpublish()
+				}
+			},
+			
+			testAudio() {
+				console.log(this.audio.muted)
+				let value = this.audio.muted
+				if(value) {
+					this.$refs.audio.classList.add('foreign__audio--active')
+					this.$refs.audio.classList.remove('foreign__audio--none')
+				}else{
+					this.$refs.audio.classList.remove('foreign__audio--active')
+					this.$refs.audio.classList.add('foreign__audio--none')
+				}
+				this.audio.muted = !value;
+			},
 			
 			openCamera() {
 				if(this.camera) {
 					return
 				}
-				// 本地测试
-				// this.audioId = QNRTC.deviceManager.deviceInfo[4].deviceId
-				console.log(QNRTC.deviceManager.deviceInfo, this.audioId)
-				QNRTC.deviceManager.deviceInfo.forEach( (item) => {
-					
-				})
-				
+				console.log(QNRTC.deviceManager.deviceInfo, this.audioId)			
 				this.camera = true
 				this.joinRoom()
 			},
 			
-			notice() {
+			/*
+			*	停止推流 
+			* 
+			**/
+			async unpublish() {
+				await this.myRTC.unpublish(this.tracks.map(track => track.info.trackId))
+				this.myRTC.stopMergeStream()
+				this.notice('Stop push stream successfully')
+			},
+			
+			async publish() {
+				if(!this.tracks) return
+				// let testTrack = this.tracks.filter(item => {
+				// 	return item.info.tag != 'video'
+				// }) 
+				await this.myRTC.publish(this.tracks)
+				let options = []
+				
+				this.tracks.forEach((item) => {
+					if (item.info.tag === 'video-track') {
+						let sOpt = {
+							trackId: item.info.trackId,
+							x: 0,
+							y: 0,
+							w: 1280,
+							h: 720,
+							z: 0
+						}
+						options.push(sOpt)
+					} else if(item.info.tag === 'audio'){
+						let aOpt = {
+							trackId: item.info.trackId
+						}
+						options.push(aOpt)
+					}
+				})
+				this.myRTC.addMergeStreamTracks(options)
+				console.log('发布成功', options , this.tracks)
+				this.notice('push flow successfully')
+			},
+			
+			
+			mergeStream(addTrack) {
+				let options = []
+				this.tracks.forEach((item) => {
+					if (item.info.tag === 'video-track') {
+						let sOpt = {
+							trackId: item.info.trackId,
+							x: 0,
+							y: 0,
+							w: 1280,
+							h: 720,
+							z: 0
+						}
+						options.push(sOpt)
+					} else if(item.info.tag === 'audio'){
+						let aOpt = {
+							trackId: item.info.trackId
+						}
+						options.push(aOpt)
+					}
+				})
+				if(addTrack) {
+					options.push(addTrack)
+				}
+				
+				this.myRTC.addMergeStreamTracks(options)
+			},
+			
+			
+			
+			
+			notice(msg) {
 				const n = new Notification('读书郎提示你', {
-					body: '摄像头开启成功, 正在推流',
-					tag: 'Readyboy',
+					body: msg || 'Open the camera successfully. If you want to broadcast live, please turn on the push button.',
+					tag: 'Readyboy tip',
 					icon: require('../../assets/tip.png'),
 					timestamp: 3000
 				});
@@ -146,9 +272,7 @@
 			
 			
 			openHandle() {
-				
 				ipcRenderer.send('open-handle', this.roomId)
-
 			},
 			
 			getDeskCapture(qiniuTracks) {
@@ -164,10 +288,10 @@
 					          mandatory: {
 					            chromeMediaSource: 'desktop',
 					            chromeMediaSourceId: sources[i].id,
-					            minWidth: 1240,
-					            maxWidth: 1240,
-					            minHeight: 720,
-					            maxHeight: 720
+					            minWidth: 1800,
+					            maxWidth: 1800,
+					            minHeight: 1080,
+					            maxHeight: 1080
 					          }
 					        }
 					      }).then((stream) => handleStream(stream))
@@ -179,48 +303,30 @@
 					
 					async function handleStream (stream) {
 						
-// 						let oVideo = document.getElementById('my')
-// 					  oVideo.srcObject = stream
-// 						console.log(oVideo, stream)
-// 					  oVideo.onloadedmetadata = (e) => {oVideo.play();console.log('play')}
+						// let oVideo = document.getElementById('my')
+					 //  oVideo.srcObject = stream
+						// console.log(oVideo, stream)
+					 //  oVideo.onloadedmetadata = (e) => {oVideo.play();console.log('play')}
 						
-						const track = stream.getVideoTracks()[0]
-						console.log(track)
-						const videoTrack = await QNRTC.createCustomTrack(track, "video-track", 1200)
+						let track = stream.getVideoTracks()[0]
+						const videoTrack = await QNRTC.createCustomTrack(track, "video-track", 1800)
 						// 测试捕获的桌面
 						// videoTrack.play(document.getElementById('other'))
+						// qiniuTracks.splice(1, 0, videoTrack)
+						// videoTrack.setMaster(true)
 						qiniuTracks.push(videoTrack)
-						await that.myRTC.publish(qiniuTracks)
-						let options = []
-						qiniuTracks.forEach((item) => {
-							//this.tracks.push(item.info.trackId)
-							if (item.info.tag === 'video-track') {
-								let sOpt = {
-									trackId: item.info.trackId,
-									x: 0,
-									y: 0,
-									w: 1280,
-									h: 740,
-									z: 1
-								}
-								options.push(sOpt)
-							} else {
-								let aOpt = {
-									trackId: item.info.trackId
-								}
-								options.push(aOpt)
-							}
-						})
-						
-						console.log('合流配置:', qiniuTracks)
-						that.myRTC.addMergeStreamTracks(options)
-						console.log('发布成功', videoTrack)
+						that.tracks = qiniuTracks
+						that.showHandle = true
 					}
 					
 					function handleError (e) {
 					  console.log(e)
 					}
 			},
+			
+			
+			
+			
 			
 			write(e) {
 				console.log(e)
@@ -313,47 +419,71 @@
 						icon: require('../../assets/tip.png'),
 						timestamp: 2000
 					});
+					let audioTrack = trackInfoList.filter((item) => {
+						return item.kind === "audio"
+					})
+					let opt = {
+						trackId: audioTrack[0].trackId
+					}
+					console.log('音频', audioTrack)
 					this.addTrack(trackInfoList)
+					this.mergeStream(opt)
 				});
 				
 				this.myRTC.on("track-remove", async trackInfoList => {
 					// 房间里有 Track 取消发布
+					
 					const list = trackInfoList.map(info => info.trackId)
 					await this.myRTC.unsubscribe(list);
+					this.mergeStream()
 					console.log('取消订阅成功')
+					
 				});
 					
 				
-				console.log(123)
 				
 				// 开启本地摄像头
 				console.log('open',this.audioId,  this.videoId)
 				const localTracks = await QNRTC.deviceManager.getLocalTracks({
 					audio: {
 						enabled: true,
-						tag: "audio"
+						tag: "audio",
+						
 						
 					},
 					// deviceId: this.audioId
 					video: {
 						enabled: true,
-						tag: "video"
+						tag: "video",
+						bitrate: 1800,
+						width: 1280,
+						height: 720
 					}
 				})
 				let localDom = document.getElementById('local')
-				
+				let localAudio = document.getElementById('audio')
 				this.notice()
 				localTracks.forEach((item) => {
 					if(item.info.tag === 'video') {
 						item.play(localDom)
 						let myVideo =  localDom.getElementsByTagName('video')[0]
-						myVideo.style = 'transform: scale(0);opacity: 0.6;width:100%;height:100%;will-change: transform;'
+						myVideo.style = 'width:100%;height:100%;will-change: transform;object-fit: cover;transform: scale(0);opacity: 0.6;'
 						setTimeout(() => {
-							myVideo.classList.add('other__live')
-						}, 1000)
+							myVideo.classList.add('my__live')
+							loading.close()
+						}, 2000)
+						// setTimeout(() => {
+						// 	loading.close()
+						// 	myVideo.classList.add('animated')
+						// 	myVideo.classList.add('bounceIn')
+						// }, 2000)
 						
+					}else if(item.info.tag === 'audio') {
+						item.play(localAudio)
+						this.audio = localAudio.getElementsByTagName('audio')[0]
+						this.audio.muted = true;
 					}
-					// 新加的地方
+					
 					item.setMaster(true)
 				})
 				this.getDeskCapture(localTracks)
@@ -367,10 +497,10 @@
 						track.play(this.$refs.other)
 						let videos = this.$refs.other.getElementsByTagName('video')
 						for(var item of videos) {
-							item.style = "width: 250px;height: 190px;margin-bottom: 7px; position: relative;transform: scale(0);opacity: 0.6;width:100%;height:100%;will-change: transform;"
-							let oDiv = document.createElement('div')
-							oDiv.classList.add('other__close')
-							item.append(oDiv)
+							item.style = "width: 250px;height: 190px;position: relative;transform: scale(0);opacity: 0.6;width:100%;height:100%;will-change: transform;"
+							// let oDiv = document.createElement('div')
+							// oDiv.classList.add('other__close')addTrack
+							// item.append(oDiv)
 							setTimeout(() => {
 								item.classList.add('other__live')
 							}, 1000)
@@ -399,21 +529,10 @@
 						this.isClose = false
 					}
 				})
+				
+				
+				
 				oVideo.style.animation = 'leaveOut ease-in-out 1s backwards'
-			},
-			
-			
-				
-			openPPT() {
-				this.ppt_url = `https://view.officeapps.live.com/op/embed.aspx?src=https://www.cxzweb.club/api/ppt/111.pptx`
-				
-				this.$nextTick(() => {
-					this.$refs.iframe.addEventListener('load', ()=>{
-						console.log('加载完成')
-						this.$refs.iframe.style = ''
-					})
-				})
-				
 			}
 		}
 	}
@@ -425,7 +544,6 @@
 		width: 100%;
 		height: 100%;
 		position: relative;
-		background-color: black;
 		animation: foreIn ease-out forwards  1.4s;
 		overflow: hidden;
 		will-change: transform; 
@@ -433,7 +551,6 @@
 	
 	.myFrame{
 		user-select: none;
-		background-color: black;
 	}
 	
 	@keyframes foreIn{
@@ -455,7 +572,6 @@
 		left: -1px;
 		top: -1px;
 		user-select: none;
-		background-color: black;
 		
 	}
 	
@@ -478,10 +594,10 @@
 	
 	
 	.video__box {
-		width: 250px;
-		height: calc(100% - 25px);
+		width: 300px;
+		height: 500px;
 		position: absolute;
-		right: 0px;
+		left: 0px;
 		top: 0px;
 		display: flex;
 		flex-direction: column;
@@ -489,9 +605,12 @@
 	}
 	
 	.foreign__local {
-		width: 250px;
-		height: 190px;
-		margin-bottom: 1px;
+		width: 100%;
+		height: 100%;
+		position: fixed;
+		left: 0px;
+		top: 0px;
+		
 	}
 	
 	
@@ -509,8 +628,8 @@
 	
 	.other__box .other__video {
 		
-		width: 250px;
-		height: 190px;
+		width: 300px;
+		height: 228px;
 		margin-bottom: 7px;
 	}
 	
@@ -625,17 +744,49 @@
 	}
 	
 	.foreign__operation{
-		position: absolute;
 		width: 16px;
 		height: 16px;
-		bottom: 5px;
-		left: 100px;
 		background-image: url(asserts/handle.svg);
 		background-size: cover;
 		background-repeat: no-repeat;
 		background-position: center center;
 		cursor: pointer;
+		margin-left: 10px;
+		margin-right: 20px;
+		
+		
 	}
+	
+	.handle__video{
+		position: absolute;
+		align-items: flex-end;
+		width: 200px;
+		height: 100px;
+		bottom: 0px;
+		left: 0px;
+		display: flex;
+		padding-bottom: 3px;
+		opacity: 0;
+		z-index: 20000;
+
+	}
+	
+	.handle__video:hover {
+		opacity: 1;
+	}
+	
+	.foreign__audio{
+		
+		width: 18px;
+		height: 18px;
+		background-size: cover;
+		background-repeat: no-repeat;
+		background-position: center center;
+		cursor: pointer;
+		transition: transform .1s linear;
+	}
+	
+	
 	
 	.foreign__camera{
 		position: absolute;
@@ -675,6 +826,7 @@
 		width: 260px;
 		height: 146px;
 		background-color: grey;
+		z-index: 999;
 	}
 	
 	.audio {
@@ -686,7 +838,7 @@
 .other__close{
 		position: absolute;
 		right: 6px;
-		top: 4px;
+		top: 0px;
 		background-image: url(./asserts/close2.svg);
 		width: 18px;
 		height: 18px;
@@ -696,6 +848,7 @@
 		cursor: pointer;
 		opacity: 0;
 		transition: all ease-in .2s; 
+		display: none;
 	}
 	
 	.other__close:active {
@@ -710,6 +863,36 @@
 		width: 200px;
 		height: 170px;
 		background-color: white;
+	}
+	
+	
+	
+	.foreign__audio:active{
+		transform: scale(1.2);
+	}
+	
+	.foreign__audio--none {
+		background-image: url(asserts/audio_no.svg);
+	}
+	
+	.foreign__audio--active {
+		background-image: url(asserts/audio_has.svg);
+	}
+	
+	.autio{
+		visibility: hidden;
+	}
+	
+	.foreign__logo{
+		position: absolute;
+		width: 200px;
+		height: 100px;
+		background-image: url(asserts/logo.png);
+		right: 20px;
+		top: 10px;
+		z-index: 500;
+		background-size: contain;
+		background-repeat: no-repeat;
 	}
 	
 </style>

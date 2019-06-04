@@ -1,16 +1,13 @@
 import axios from 'axios'
 
 
-
-const TEST_URL = 'https://rtn.double-teacher-test.cs.dreamdev.cn'
-const FORMAL_URL = 'https://rtn.dteacher.readboy.com'
-
-
-const baseURL = false ?  FORMAL_URL : TEST_URL
-
 class Live {
+	constructor(url) {
+		this.baseURL = url
+	}
+	
 	_request(options) {
-		let url = baseURL + '/' + options.url
+		let url = this.baseURL + '/' + options.url
 		let res = null
 		if (options.method === 'get') {
 			res = axios({
@@ -29,7 +26,6 @@ class Live {
 	}
 	
 	getRoomToken(roomName, userId) {
-		console.log(1111, roomName)
 		let options = {
 			url: `v1/rtn/rooms/${roomName}/users/admin/token`,
 			method: 'get',

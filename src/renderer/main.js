@@ -10,6 +10,7 @@ import 'element-ui/lib/theme-chalk/index.css'
 
 import '../../static/main.css'
 import './assets/public/iconfont.css'
+import '../../static/font.css'
 
 
 

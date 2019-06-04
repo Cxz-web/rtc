@@ -2,9 +2,24 @@
 	<div class="login" ref="login">
 		<div class="login__logo"></div>
 		<div class="login__wrap"><input type="text" class="login__btn" placeholder="account"  v-model="username"></div>
-		<div class="login__wrap"><input type="text" class="login__btn" placeholder="password" v-model="password"></div>
-		<div class="login__tip" v-if="showLoading"><span v-for="(item, index) in tip" class="login__title" :style="`animation-delay: ${index*0.3}s;`">{{item}}</span></div>
+		<div class="login__wrap"><input type="password" class="login__btn" placeholder="password" v-model="password"></div>
+		
+		<div class="login__url">
+			<el-radio v-model="line" label="2">International Line</el-radio>
+			<el-radio v-model="line" label="1">China Line</el-radio>
+		</div>
+		
+		
+		<div class="login__url" style="margin-top: 20px;">
+			<el-radio v-model="dev" label="2">Formal course</el-radio>
+			<el-radio v-model="dev" label="1">Testing course</el-radio>
+		</div>
+		 
+		
+		<div class="login__tip" v-if="showLoading"><span v-for="(item, index) in tip" class="login__title" :style="`animation-delay: ${index*0.1}s;`">{{item}}</span></div>
 		<div class="login__in" @click="login" ref="btn"> <div v-if="!showLoading">SIGN IN</div><div v-else class="login__loading"></div></div>
+		
+		<div class="login__version">v1.0.0-beta.31</div>
 	</div>
 </template>
 
@@ -12,25 +27,33 @@
 	import axios from 'axios'
 	import qs from 'qs'
 	
-	import { mapState, mapActions } from "vuex"
+	import { mapState, mapActions  } from "vuex"
 	
 	const { ipcRenderer } = require('electron')
-	const baseUrl = 'http://api.double-teacher-test.cs.dreamdev.cn'
-	
+	// const baseUrl = 'http://api.double-teacher-test.cs.dreamdev.cn'
+	const baseUrl = 'http://api.double-teacher.dream.cn'
 	export default {
 		name: 'login-page',
 		data() {
 			return {
-				tip: '正在登录...',
+				tip: 'Logging...',
 				showLoading: false,
 				username: '',
 				password: '',
-				data: null
+				data: null,
+				line: '2',
+				dev:  '2'
 			}
 		},
+		
+		created() {
+			this.getLogin()	
+		},
+		
 		mounted() {
-			console.log(123)
+			localStorage.setItem('pushState', false)
 			this.$refs.login.classList.add('in')
+			
 		},
 		methods: {
 			login() {
@@ -46,7 +69,44 @@
 // 			computed() {
 // 				...mapState(["token"])
 // 			},
+
+			saveLogin() {
+				const data = JSON.stringify({
+					username: this.username,
+					password: this.password
+				})
+				localStorage.setItem('Readboy_foreign', data)
+			},
+			
+			getLogin() {
+				const data = localStorage.getItem('Readboy_foreign')
+				if(data) {
+					let login = JSON.parse(data)
+					this.username = login.username
+					this.password = login.password
+				}
+			},
+			
+			
 			request() {
+				let line_url = {} 
+				if(this.line === '1') {
+					line_url.RTN_URL ='https://rtn.dteacher.readboy.com'
+					line_url.API_URL = 'http://api.double-teacher.dream.cn'
+				} else {
+					line_url.RTN_URL = 'http://us-east.dteacher.readboy.com/rtn'
+					line_url.API_URL = 'http://us-east.dteacher.readboy.com/api'
+				}
+				
+				let text = this.dev === '1' ? 'Testing course' : 'Formal course' 
+				let courseId = this.dev === '1' ? '01201905061453049367' : '01201905101700563374' 
+				let envInfo = {
+					text: text,
+					courseId: courseId
+				}
+		
+				this.$store.dispatch('setLine', line_url)
+				this.$store.dispatch('setEvn', envInfo)
 				this.data = {
 					username: this.username,
 					password: this.password
@@ -54,16 +114,15 @@
 				
 				axios({
 					method: 'post',
-					url: baseUrl + '/v2/webapi/login',
+					url: line_url.API_URL + '/v2/webapi/login',
 					data: qs.stringify(this.data)
 				}).then(res => {
+					this.saveLogin()
 					const token = res.data.access_token
-					// this.getToken(this.data)
-					console.log(token)
 					this.$store.dispatch('setToken', token)
 					setTimeout(() => {
 						this.successful()
-					}, 3000)
+					}, 2000)
 					
 				}).catch(err => {
 					this.$refs.btn.classList.remove('login__in--disabled')
@@ -237,12 +296,12 @@
 	.login__tip{
 		color: white;
 		height: 30px;
-		font-size: 22px;
+		font-size: 24px;
 		letter-spacing: 3px;
 		margin-top: 24px;
 		display: flex;
 		position: absolute;
-		top: 300px;
+		top: 430px;
 		
 		animation: tipOut ease-out .3s ;
 	}
@@ -257,18 +316,30 @@
 	}
 	
 	.login__title{
-		animation: moveTitle ease-in-out   alternate .6s infinite;
+		animation: moveTitle ease-in-out   alternate .4s infinite;
 		transform: translate(0, 0);
 		text-shadow: 1px 1px 20px #FFffff;
 		font-weight: bolder;
 		user-select: none;
 	}
 	
+	.login__version{
+		position: absolute;
+		right: 10px;
+		bottom: 4px;
+		color: white;
+		font-size: 14px;
+	}
+	
 	@keyframes moveTitle{
 		to{
-			transform: translate(0, -6px);
+			transform: translate(0, -10px);
 			
 		}
+	}
+	
+	.login__url {
+		color: white;
 	}
 	
 	
