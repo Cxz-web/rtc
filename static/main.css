@@ -52,7 +52,25 @@
     font-size: 18px;
 }
 
+.el-pager li{
+	background-color: transparent;
+	font-size: 18px;
+	color: darkorange;
+}
+.el-pagination .btn-next .el-icon, .el-pagination .btn-prev .el-icon {
+	font-size: 18px;
+	color: darkorange;
+}
+
+.el-pager li.active, .el-pager li:hover {
+	color: firebrick;
+}
+
 /* .el-message-box__btns{
 	display: flex;
 	justify-content: space-around;
 } */
+.el-pagination button:disabled, .el-pagination .btn-prev, .el-pagination .btn-next {
+	background-color: transparent;
+	
+}

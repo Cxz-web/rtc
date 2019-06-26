@@ -1,9 +1,13 @@
 <template>
 	<div class="lesson">
 		<div class="lesson__title"><div class="title__icon"></div>Dual-teacher Live Broadcast&nbsp;&nbsp;( {{envInfo.text}} ) </div>
-		<!-- <div class="lesson__bread"> Home > class</div> -->
-		<div class="lesson__reload" @click="reload"></div>
-		<div class="lesson__wrap" v-show="!show">
+	
+		<div class="lesson__reload" @click="reload" v-show="showLesson"></div>
+		<div class="lesson__back" @click="back" v-show="showLesson"></div>
+		<div class="lesson__reload" @click="reloadTable" v-show="!showLesson"></div>
+		
+		
+		<div class="lesson__wrap" v-show="showLesson">
 			<div class="lesson__table">
 				<div class="table__1">Course</div>
 				<div class="table__2">teacher</div>
@@ -24,10 +28,34 @@
 					<div class="btn" @click.stop="toLive(item.F_lesson_id, item.F_name)">Live</div>
 				</div>
 			</div>
+		</div>
+		
+		
+			<div class="bigLesson" v-show="!showLesson&&bigList.length>0">
+				
+					<div v-for="item in bigList">
+						<template v-if="item.F_course_list[0]">
+							<div class="bigLesson-item lesson__content fadeIn">
+								<div class="bigLesson-name">{{ item.F_course_list[0].F_course_title}}</div>
+								<div class="bigLesson-btn" @click="getLessonList(item.F_course_list[0].F_course_id)">enter</div>
+							</div>
+						</template>
+					</div>
+			</div>
+		
+		
+		<div class="page" v-show="!showLesson">
+			<el-pagination
+				:page-size="pageSize"
+				layout="prev, pager, next"
+				:total="total"
+				@current-change="currentPage"
+				:current-page="page"
+			>
+			</el-pagination>
 			
 		</div>
 		
-		<!-- <lessons-details v-if="show"></lessons-details> -->
 		
 	</div>
 	
@@ -45,24 +73,78 @@
 		data() {
 			return {
 				list: [],
-				show: false,
-				courseid: '01201905061453049367'
+				page: 1,
+				showLesson: false,
+				courseid: '01201905061453049367',
+				bigList: [],
+				total: 0,
+				pageSize: 7,
+				index: 1,
+				type: 1
+				
 			}
 		},
 		created() {
+			console.log(this.enviroment)
+			this.type = this.enviroment === 'test' ? 1 : 2
 			this.courseid = this.envInfo.courseId
 			console.log(this.rtnUrl, this.apiUrl)
 			this.TOKEN = this.$store.state.token
-			this.getLessonList()
+			// this.getLessonList()
 			console.log(this.envInfo.courseId)
-			
+			this.getClasses()
 		},
 		
 		computed: {
-			...mapState(['rtnUrl', 'apiUrl', 'envInfo'])
+			...mapState(['rtnUrl', 'apiUrl', 'envInfo', 'enviroment'])
 		},
 		
 		methods: {
+			currentPage(page) {
+				this.bigList = []
+				this.index = page
+				this.getClasses(page)
+			},
+			// 获取讲师课程
+			reloadTable() {
+				this.getClasses(this.index)
+			},
+			getClasses(page) {
+				loading = this.$loading({
+				      lock: true,
+				      text: 'Reading data...',
+				      spinner: 'el-icon-loading',
+				      background: 'rgba(0, 0, 0, 0.7)'
+				})
+				const api = "/v2/webapi/term/terms"
+				const options = {	
+					method: "get",
+					url: this.apiUrl + api,
+					headers: {'Authorization': this.TOKEN},
+					params: {
+						page: page || 1,
+						page_size: 7,
+						type: this.type,
+						grade: 0,
+						subject: 0,
+						kind: -1,
+						model: -1,
+						order_type: -1,
+						
+					}
+				}
+				
+				axios(options).then((res) => {
+					const data = res.data
+					this.bigList = data.F_term_list
+					this.total = data.F_term_count
+					loading.close()
+				}).catch(() => {
+					loading.close()
+					this.notice()
+				})
+			},
+			
 			
 			notice() {
 				const n = new Notification('读书郎提示你', {
@@ -74,10 +156,18 @@
 			},
 			
 			reload() {
+				if(!this.id) return
 				this.list = []
-				this.getLessonList()
+				this.getLessonList(this.id)
 			},
-			getLessonList() {
+			
+			back() {
+				this.showLesson = false
+				// this.list = []
+			},
+			
+			getLessonList(id) {
+				this.id = id
 				loading = this.$loading({
 				      lock: true,
 				      text: 'Reading data...',
@@ -87,14 +177,17 @@
 				
 				let options = {
 					method: 'get',
-					url: this.apiUrl + `/v2/webapi/lesson/lessons?courseid=${this.courseid}`,
+					url: this.apiUrl + `/v2/webapi/lesson/lessons?courseid=${id}`,
 					headers: {'Authorization': this.TOKEN}
 				}
 				
 				axios(options).then((res) => {
-					this.list= res.data.F_lesson_list
+					this.showLesson = true
+					const data = res.data
+					this.list= data.F_lesson_list
 					loading.close()
 				}).catch((e)=>{
+					this.showLesson = false
 					this.notice()
 					loading.close()
 				})
@@ -264,6 +357,8 @@
 		display: flex;
 		flex-direction: column;
 		align-items: center;
+		height: 600px;
+		overflow-y: scroll;
 	}
 	
 	.lesson__reload{
@@ -276,11 +371,88 @@
 		height: 40px;
 		background-repeat: no-repeat;
 		cursor: pointer;
+		z-index: 99;
+	}
+	
+	.lesson__back{
+		background-image: url(./asserts/bbb.svg);
+		background-size: cover;
+		position: absolute;
+		left: 15px;
+		bottom: 10px;
+		width: 40px;
+		height: 40px;
+		background-repeat: no-repeat;
+		cursor: pointer;
+		z-index: 99;
 	}
 	
 	.lesson__reload:active{
 		background-image: url(./asserts/reload2.svg);
 	}
+	
+	.bigLesson{
+		width: 69%;
+		margin: 0 auto;
+		margin-top: 20px;
+	}
+	
+	.bigLesson-item{
+		margin-bottom: 16px;
+		display: flex;
+		justify-content: space-between;
+		box-sizing: border-box;
+		padding-right: 20px;
+		padding-left: 10px;
+		border-radius: 30px;
+		align-items: center;
+	}
+	
+	.bigLesson-btn{
+		width: 80px;
+		height: 34px;
+		background-color: darkorange;
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		line-height: 0px;
+		border-radius: 20px;
+		cursor: pointer;
+		user-select: none;
+	}
+	
+	.bigLesson-btn:active {
+		background-color: orangered;
+	}
+	
+	
+	.fadeIn{
+		animation: fadeIn-in .5s;
+	}
+	
+@keyframes fadeIn-in {
+  0% {
+    opacity: 0.4;
+		transform: translateY(10px);
+  }
+
+  100% {
+		opacity: 1;
+    transform: translateY(0px);
+  }
+}
+
+.page{
+	position: absolute;
+	font-size: 24px;
+	left: 50%;
+	transform: translateX(-50%);
+	bottom: 20px;
+}
+
+
+	
+	
 	
 	
 </style>

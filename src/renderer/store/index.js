@@ -17,8 +17,10 @@ export default new Vuex.Store({
 		push: false,
 		rtnUrl: 'http://us-east.dteacher.readboy.com/rtn',
 		apiUrl: 'http://us-east.dteacher.readboy.com/api',
+		wsUrl: 'ws://us-east.dteacher.readboy.com',
 		lessonName: '',
-		envInfo: {}
+		envInfo: {},
+		enviroment: 'formal'
 	},
 	actions: {
 		setToken(store, token) {
@@ -38,11 +40,20 @@ export default new Vuex.Store({
 		},
 		setEvn(store, info) {
 			store.commit("SET_EVN", info)
+		},
+		setEnviroment(store, enviroment) {
+			
+			store.commit("SET_ENVIROMENT", enviroment)
 		}
 
 	},
 
 	mutations: {
+		SET_ENVIROMENT(state, enviroment) {
+			console.log('设置环境', enviroment)
+			state.enviroment = enviroment
+		}, 
+		
 		SET_MAIN_TOKEN(state, token) {
 			state.token = token
 		},
@@ -55,6 +66,7 @@ export default new Vuex.Store({
 		SET_Line_URL(state, obj) {
 			state.rtnUrl =	obj.RTN_URL
 			state.apiUrl = 	obj.API_URL
+			state.wsUrl = obj.WS_URL
 		},
 		SET_LESSON_NAME(state, lessonName) {
 			state.lessonName = 	lessonName

@@ -419,6 +419,11 @@
 						icon: require('../../assets/tip.png'),
 						timestamp: 2000
 					});
+					
+					// 测试
+					this.addTrack(trackInfoList)
+					return
+					
 					let audioTrack = trackInfoList.filter((item) => {
 						return item.kind === "audio"
 					})
@@ -477,7 +482,7 @@
 						// 	myVideo.classList.add('animated')
 						// 	myVideo.classList.add('bounceIn')
 						// }, 2000)
-						
+						// 
 					}else if(item.info.tag === 'audio') {
 						item.play(localAudio)
 						this.audio = localAudio.getElementsByTagName('audio')[0]
@@ -503,7 +508,7 @@
 							// item.append(oDiv)
 							setTimeout(() => {
 								item.classList.add('other__live')
-							}, 1000)
+							}, 500)
 						}
 					} else if(track.info.kind === 'audio') {
 						track.play(this.$refs.audio)

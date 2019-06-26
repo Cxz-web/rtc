@@ -162,11 +162,12 @@
 				return this.isGivingPacket === 0 ? 'Red packet activity closed.' : 'Red Pack Activity Opened.'
 			},
 			
-			...mapState(['rtnUrl', 'apiUrl', 'lessonName', 'envInfo'])
+			...mapState(['rtnUrl', 'apiUrl', 'lessonName', 'envInfo', 'wsUrl'])
 			
 		},
 		
 		created() {
+			console.log(this.apiUrl)
 			this.TOKEN = this.$store.state.token
 			this.lessonid = this.$store.state.lessonId
 			this.getInitState()
@@ -192,10 +193,8 @@
 	
 			webSocket(loading) {
 				
-				let url = 'ws://api.double-teacher.dream.cn'
-				let foreign = 'ws://us-east.dteacher.readboy.com'
-				socketURL = foreign + `/api/v2/webapi/roster/connect?lesson_id=${this.lessonid}&token=${this.TOKEN}`
-				
+				console.log('环境', this.wsUrl)
+				socketURL =  this.wsUrl + `?lesson_id=${this.lessonid}&token=${this.TOKEN}`
 				Socket = new WebSocket(socketURL)
 				Socket.onopen = () => {
 					console.log('已创建连接')

@@ -18,7 +18,7 @@ if (process.env.NODE_ENV !== 'development') {
 ipcMain.on('open-handle', (event, arg) => {
 	if(handleWindow) {
 		handleWindow.focus()
-		return
+		 return
 	}
 	createHandle(arg)
 })

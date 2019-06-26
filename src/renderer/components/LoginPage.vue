@@ -16,10 +16,11 @@
 		</div>
 		 
 		
-		<div class="login__tip" v-if="showLoading"><span v-for="(item, index) in tip" class="login__title" :style="`animation-delay: ${index*0.1}s;`">{{item}}</span></div>
+		<div class="login__tip" v-if="showLoading">
+				<span v-for="(item, index) in tip" class="login__title" :style="`animation-delay: ${index*0.1}s;`">{{item}}</span></div>
 		<div class="login__in" @click="login" ref="btn"> <div v-if="!showLoading">SIGN IN</div><div v-else class="login__loading"></div></div>
 		
-		<div class="login__version">v1.0.0-beta.31</div>
+		<div class="login__version">v1.1.0</div>
 	</div>
 </template>
 
@@ -29,7 +30,7 @@
 	
 	import { mapState, mapActions  } from "vuex"
 	
-	const { ipcRenderer } = require('electron')
+  const { ipcRenderer } = require('electron')
 	// const baseUrl = 'http://api.double-teacher-test.cs.dreamdev.cn'
 	const baseUrl = 'http://api.double-teacher.dream.cn'
 	export default {
@@ -64,12 +65,6 @@
 				this.request()
 			},
 			test() {},
-			// Authentication
-			
-// 			computed() {
-// 				...mapState(["token"])
-// 			},
-
 			saveLogin() {
 				const data = JSON.stringify({
 					username: this.username,
@@ -93,13 +88,24 @@
 				if(this.line === '1') {
 					line_url.RTN_URL ='https://rtn.dteacher.readboy.com'
 					line_url.API_URL = 'http://api.double-teacher.dream.cn'
+					line_url.WS_URL = 'wss://api.dteacher.readboy.com/v2/webapi/roster/connect'
 				} else {
 					line_url.RTN_URL = 'http://us-east.dteacher.readboy.com/rtn'
 					line_url.API_URL = 'http://us-east.dteacher.readboy.com/api'
+					line_url.WS_URL = 'wss://us-east.dteacher.readboy.com/api/v2/webapi/roster/connect'
 				}
 				
 				let text = this.dev === '1' ? 'Testing course' : 'Formal course' 
-				let courseId = this.dev === '1' ? '01201905061453049367' : '01201905101700563374' 
+				let courseId = this.dev === '1' ? '01201905061453049367' : '01201905101700563374'
+				// 设置环境
+				
+				if(this.dev === '1') {
+					this.$store.dispatch('setEnviroment', 'test')
+				} else {
+					this.$store.dispatch('setEnviroment', 'formal')
+				}
+				
+				
 				let envInfo = {
 					text: text,
 					courseId: courseId
