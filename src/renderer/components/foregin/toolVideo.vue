@@ -36,6 +36,7 @@
 	// 01201901151300405631
 	export default {
 		name: 'new-rtc',
+		
 		data() {
 			return {
 				ppt_url: null,
@@ -235,8 +236,9 @@
 					let that = this
 					desktopCapturer.getSources({ types: ['window', 'screen'] }, (error, sources) => {
 					  if (error) throw error
+						console.log(sources)
 					  for (let i = 0; i < sources.length; ++i) {
-							if (sources[i].name === 'ReadyBoy') {
+							if (sources[i].name.toLowerCase().includes('obs')) {
 								console.log(sources[i])
 					      navigator.mediaDevices.getUserMedia({
 					        audio: false,
@@ -267,9 +269,10 @@
 						let track = stream.getVideoTracks()[0]
 						const videoTrack = await QNRTC.createCustomTrack(track, "video-track", 1800)
 						// 测试捕获的桌面
-						// videoTrack.play(document.getElementById('other'))
+						videoTrack.play(document.getElementById('local'))
 						// qiniuTracks.splice(1, 0, videoTrack)
-						// videoTrack.setMaster(true)
+						videoTrack.setMaster(true)
+						
 						qiniuTracks.push(videoTrack)
 						that.tracks = qiniuTracks
 						that.showHandle = true
@@ -409,21 +412,20 @@
 					audio: {
 						enabled: true,
 						tag: "audio",
-						
-						
-					},
-					// deviceId: this.audioId
-					video: {
-						enabled: true,
-						tag: "video",
-						bitrate: 1800,
-						width: 1280,
-						height: 720
 					}
 				})
+				
+				// video: {
+				// 	enabled: true,
+				// 	tag: "video",
+				// 	bitrate: 1800,
+				// 	width: 1280,
+				// 	height: 720
+				// }
 				let localDom = document.getElementById('local')
 				let localAudio = document.getElementById('audio')
 				this.notice()
+				loading.close()
 				localTracks.forEach((item) => {
 					if(item.info.tag === 'video') {
 						item.play(localDom)

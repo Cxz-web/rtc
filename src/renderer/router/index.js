@@ -21,37 +21,28 @@ export default new Router({
 				name: 'lesson-main',
 				component: require('@/components/foregin/lessonMain').default
 			},
-			{
-				path: 'lessonsDetails',
-				name: 'lessons-details',
-				component: require('@/components/foregin/lessonsDetails').default
-			},
+	
 			{
 				path: 'liveHandle',
 				name: 'live-handle',
 				component: require('@/components/foregin/NewHandle').default
 				
 			},
-			{
-				path: 'rtc',
-				name: 'live-rtc',
-				component: require('@/components/foregin/foreign_teacher_video').default
-			},
-			{
-				path: 'edit',
-				name: 'edit-ppt',
-				component: require('@/components/foregin/EditPPT').default
-			},
+			
 			{
 				path: 'newRtc',
 				name: 'new-rtc',
 				component: require('@/components/foregin/newForeign').default
+			},
+			
+			{
+				path: 'obs',
+				name: 'tool-video',
+				component: require('@/components/foregin/toolVideo').default
 			}
 		]
 	},
 	
-		
-		
     {
       path: '*',
       redirect: '/'

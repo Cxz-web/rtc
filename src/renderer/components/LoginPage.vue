@@ -20,7 +20,7 @@
 				<span v-for="(item, index) in tip" class="login__title" :style="`animation-delay: ${index*0.1}s;`">{{item}}</span></div>
 		<div class="login__in" @click="login" ref="btn"> <div v-if="!showLoading">SIGN IN</div><div v-else class="login__loading"></div></div>
 		
-		<div class="login__version">v1.1.0</div>
+		<div class="login__version">v1.2.0</div>
 	</div>
 </template>
 
@@ -92,7 +92,7 @@
 				} else {
 					line_url.RTN_URL = 'http://us-east.dteacher.readboy.com/rtn'
 					line_url.API_URL = 'http://us-east.dteacher.readboy.com/api'
-					line_url.WS_URL = 'wss://us-east.dteacher.readboy.com/api/v2/webapi/roster/connect'
+					line_url.WS_URL = 'ws://us-east.dteacher.readboy.com/api/v2/webapi/roster/connect'
 				}
 				
 				let text = this.dev === '1' ? 'Testing course' : 'Formal course' 
