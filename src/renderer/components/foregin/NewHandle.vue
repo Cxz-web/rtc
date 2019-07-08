@@ -472,8 +472,8 @@
 					this.liveBtnState = this.liveState.data
 					
 					this.serviceName = this.liveState.urlname
-					this.servicePath = this.liveState.urlpath
-					console.log(222, this.liveBtnState)
+					this.servicePath = this.liveState.pushurl
+					
 					// console.log('交互状态', this.interactiveState)
 					// console.log('直播信息', this.liveInfo)
 					// console.log('直播状态', this.liveState)
@@ -629,9 +629,10 @@
 					
 					
 					
+					
 					if(which == 'btn1_type'){
 							this.serviceName = data.urlname || ''
-							this.servicePath = data.urlpath || ''
+							this.servicePath = data.pushurl || ''
 					}
 					
 					

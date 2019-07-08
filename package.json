@@ -1,6 +1,6 @@
 {
-  "name": "Readyboy",
-  "version": "v1.2.0",
+  "name": "Readboy",
+  "version": "v2.3.1",
   "author": "cxz",
   "description": "Online live streaming education platform",
   "license": null,
@@ -17,7 +17,7 @@
     "postinstall": ""
   },
   "build": {
-    "productName": "Readyboy",
+    "productName": "Readboy",
     "appId": "8562871",
     "directories": {
       "output": "build"

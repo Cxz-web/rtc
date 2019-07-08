@@ -1,5 +1,5 @@
 <template>
-	<div class="lesson">
+	<div class="lesson" >
 		<div class="lesson__title"><div class="title__icon"></div>Dual-teacher Live Broadcast&nbsp;&nbsp;( {{envInfo.text}} ) </div>
 	
 		<div class="lesson__reload" @click="reload" v-show="showLesson"></div>
@@ -67,6 +67,7 @@
 <script>
 	import axios from 'axios'
 	import { mapState } from "vuex"
+	const { ipcRenderer } = require('electron')
 	let loading = null
 	export default {
 		name: 'lesson-main',

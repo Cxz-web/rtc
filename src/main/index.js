@@ -30,6 +30,8 @@ ipcMain.on('not-certified', () => {
 
 
 
+
+
 let mainWindow
 let liveWindow
 let handleWindow
@@ -37,6 +39,8 @@ let handleWindow
 let screenHandle = {}
 
 let full = false;
+
+
 
 
 ipcMain.on('system-event', (event, arg) => {
@@ -72,21 +76,18 @@ const winURL = process.env.NODE_ENV === 'development'
 const path = require('path')
 // login窗口
 function createWindow () {
-  /**
-   * Initial window options
-   */
   mainWindow = new BrowserWindow({
     height: 700,
     useContentSize: true,
     width: 380,
-	frame: false ,
-	maxWidth: 380,
-	maxHeight: 700,
-	resizable: false,
-	transparent: true,
-	webPreferences : {
-		nodeIntegration: true
-	}
+		frame: false ,
+		maxWidth: 380,
+		maxHeight: 700,
+		resizable: false,
+		transparent: true,
+		webPreferences : {
+			nodeIntegration: true
+		}
   })
 	// mainWindow.webContents.openDevTools();
 	
@@ -111,7 +112,7 @@ function createWindow () {
 	// mainWindow.loadFile(path.resolve(__dirname, './index.html'))
   mainWindow.on('closed', () => {
     mainWindow = null
-	screenHandle.login = null
+		screenHandle.login = null
   })
 }
 
@@ -191,22 +192,4 @@ app.on('activate', () => {
   }
 })
 
-/**
- * Auto Updater
- *
- * Uncomment the following code below and install `electron-updater` to
- * support auto updating. Code Signing with a valid certificate is required.
- * https://simulatedgreg.gitbooks.io/electron-vue/content/en/using-electron-builder.html#auto-updating
- */
 
-/*
-import { autoUpdater } from 'electron-updater'
-
-autoUpdater.on('update-downloaded', () => {
-  autoUpdater.quitAndInstall()
-})
-
-app.on('ready', () => {
-  if (process.env.NODE_ENV === 'production') autoUpdater.checkForUpdates()
-})
- */
