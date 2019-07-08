@@ -40,6 +40,22 @@
 			<div class="socket__btn" @click="reloadSocket"></div>
 			<div class="socket__tip">Network error, please reconnect!!</div>
 		</div>
+		
+		<div class="pwd">
+			<div style="margin-bottom: 4px;">
+				<span class="copy" @click="copy(1)">复制</span>
+				<span id="btn1" >服务器：</span>
+				<input type="text" v-model="servicePath" class="_input" disabled="disabled" style="color: black;">
+			</div>
+			
+			<div>
+				<span class="copy" @click="copy(2)">复制</span>
+				<span >流密钥：</span>
+				<input type="text" v-model="serviceName" class="_input" disabled="disabled" style="color: black;">
+			</div>
+	
+		</div>
+		
 	</div>
 </template>
 
@@ -58,13 +74,15 @@
 	// http://us-east.dteacher.readboy.com/api
 	// http://us-east.dteacher.readboy.com/rtn
 	let judge = new JudgeState()
-	
+	const clipboard = require('electron').clipboard
 	
 	
 	export default {
 		name: 'live-handle',
 		data() {
 			return {
+				serviceName: '',
+				servicePath: '',
 				lessonid: '01201903181114562641',
 				TOKEN: '',
 				interactiveState: null, // 交互状态
@@ -175,7 +193,6 @@
 		},
 		
 		mounted() {
-			
 			indexLoading = this.$loading({
 			      lock: true,
 			      text: 'waiting...',
@@ -190,7 +207,14 @@
 		},
 		
 		methods: {
-	
+			copy(id) {
+				if(id==1) {
+					clipboard.writeText(this.servicePath)
+				}else {
+					clipboard.writeText(this.serviceName)
+				}
+				
+			},
 			webSocket(loading) {
 				
 				console.log('环境', this.wsUrl)
@@ -441,10 +465,15 @@
 				
 				this._get(url, {lessonid: this.lessonid}).then((res) => {
 					const data = res.data
+					console.log(13, data)
 					this.interactiveState = data.interactive_state
 					this.liveInfo = data.live_info
 					this.liveState = data.live_state
 					this.liveBtnState = this.liveState.data
+					
+					this.serviceName = this.liveState.urlname
+					this.servicePath = this.liveState.urlpath
+					console.log(222, this.liveBtnState)
 					// console.log('交互状态', this.interactiveState)
 					// console.log('直播信息', this.liveInfo)
 					// console.log('直播状态', this.liveState)
@@ -592,13 +621,28 @@
 					type: this[which] === 1 ? 0 : 1
 				}
 				
-				
+				// console.log(33333,which, this.btn1_type)
 				
 				this._post(url, data).then((res) => {
+					const data =res.data
 					this.enable = true
+					
+					
+					
+					if(which == 'btn1_type'){
+							this.serviceName = data.urlname || ''
+							this.servicePath = data.urlpath || ''
+					}
+					
+					
+					
 					loading.close()
+				
+					
+					
 				}).catch( (err) => {
 					this.enable = true
+					
 					loading.close()
 					console.log(err.toString())
 					if(which === 'btn2_type') {
@@ -1022,6 +1066,37 @@
 	
 	.socket__btn:active{
 		background-image: url(./asserts/reload2.svg);
+	}
+	
+	.pwd{
+		position: absolute;
+		right: 10px;
+		bottom: 10px;
+	}
+	
+	._input{
+		background-color: transparent;
+		border: none;
+		
+		padding: 2px;
+		padding-left: 2px;
+		padding-right: 2px;
+		font-weight: bold;
+	}
+	
+	.copy{
+		background-color: darkorange;
+		padding: 1px;
+		padding-left: 6px;
+		padding-right: 6px;
+		color: white;
+		border-radius: 3px;
+		font-size: 14px;
+		cursor: pointer;
+	}
+	
+	.copy:active{
+		color: red;
 	}
 </style>
 

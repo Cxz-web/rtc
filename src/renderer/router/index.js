@@ -36,9 +36,25 @@ export default new Router({
 			},
 			
 			{
+				path: 'testRtc',
+				name: 'test-rtc',
+				component: require('@/components/foregin/testForeign').default
+			},
+			
+			{
+				path: 'oldRtc',
+				name: 'old-rtc',
+				component: require('@/components/foregin/oldForeign').default
+			},
+			
+			{
 				path: 'obs',
 				name: 'tool-video',
 				component: require('@/components/foregin/toolVideo').default
+			},{
+				path: 'noRtc',
+				name: 'no-rtc',
+				component: require('@/components/foregin/noForeign').default
 			}
 		]
 	},

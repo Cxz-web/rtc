@@ -70,7 +70,6 @@
 		},
 		
 		created() {
-			console.log('new')
 			this.roomId = this.$route.query.lessonid
 			this.$store.dispatch('setLessonId', this.roomId)
 		},
@@ -248,10 +247,10 @@
 					          mandatory: {
 					            chromeMediaSource: 'desktop',
 					            chromeMediaSourceId: sources[i].id,
-					            minWidth: 1280,
-					            maxWidth: 1280,
-					            minHeight: 720,
-					            maxHeight: 720
+					            minWidth: 1800,
+					            maxWidth: 1800,
+					            minHeight: 1080,
+					            maxHeight: 1080
 					          }
 					        }
 					      }).then((stream) => handleStream(stream))
@@ -262,8 +261,11 @@
 					})
 					
 					async function handleStream (stream) {
+						
+					
+						
 						let track = stream.getVideoTracks()[0]
-						const videoTrack = await QNRTC.createCustomTrack(track, "video-track", 1200)
+						const videoTrack = await QNRTC.createCustomTrack(track, "video-track", 1800)
 						
 						that.statsId = setInterval(()=>{
 							console.log(videoTrack.getStats())
@@ -405,7 +407,7 @@
 					video: {
 						enabled: true,
 						tag: "video",
-						bitrate: 1200,
+						bitrate: 1500,
 						width: 1280,
 						height: 720
 					}

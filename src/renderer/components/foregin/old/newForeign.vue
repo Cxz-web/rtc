@@ -64,13 +64,11 @@
 				isClose: false,
 				tracks: null,
 				showHandle: false,
-				audio: null,
-				statsId: null
+				audio: null
 			}
 		},
 		
 		created() {
-			console.log('new')
 			this.roomId = this.$route.query.lessonid
 			this.$store.dispatch('setLessonId', this.roomId)
 		},
@@ -90,12 +88,10 @@
 			for (const track of this.tracks) {
 				track.release();
 			}
-			clearInterval(this.statsId)
 			this.myRTC.leaveRoom()
 			this.myRTC = null
 			ipcRenderer.removeAllListeners('current-state')
 			document.body.onfullscreenchange = null
-			
 		},
 	
 		
@@ -248,10 +244,10 @@
 					          mandatory: {
 					            chromeMediaSource: 'desktop',
 					            chromeMediaSourceId: sources[i].id,
-					            minWidth: 1280,
-					            maxWidth: 1280,
-					            minHeight: 720,
-					            maxHeight: 720
+					            minWidth: 1800,
+					            maxWidth: 1800,
+					            minHeight: 1080,
+					            maxHeight: 1080
 					          }
 					        }
 					      }).then((stream) => handleStream(stream))
@@ -262,13 +258,18 @@
 					})
 					
 					async function handleStream (stream) {
+						
+						// let oVideo = document.getElementById('my')
+					 //  oVideo.srcObject = stream
+						// console.log(oVideo, stream)
+					 //  oVideo.onloadedmetadata = (e) => {oVideo.play();console.log('play')}
+						
 						let track = stream.getVideoTracks()[0]
-						const videoTrack = await QNRTC.createCustomTrack(track, "video-track", 1200)
-						
-						that.statsId = setInterval(()=>{
-							console.log(videoTrack.getStats())
-						}, 1000)
-						
+						const videoTrack = await QNRTC.createCustomTrack(track, "video-track", 1500)
+						// 测试捕获的桌面
+						// videoTrack.play(document.getElementById('other'))
+						// qiniuTracks.splice(1, 0, videoTrack)
+						// videoTrack.setMaster(true)
 						qiniuTracks.push(videoTrack)
 						that.tracks = qiniuTracks
 						that.showHandle = true
@@ -342,9 +343,20 @@
 				QNRTC.deviceManager.on("device-add", (res) => {
 					console.log('插入新设备', res)
 					this.audioId = res.deviceId
+// 					res.forEach((item) => {
+// 						if(item.kind === 'audioinput') {
+// 							this.audioId = item.deviceId
+// 						}
+// 						if(item.kind === 'videoinput') {
+// 							this.videoId = item.deviceId
+// 						}
+// 					})
+					
 				})
 			},
+			
 			async joinRoom() {
+				
 				// 获取token
 				const res = await this.live.getRoomToken(this.roomId, 'admin')
 				const token = res.data.room_token
@@ -366,7 +378,6 @@
 					
 					// 测试
 					// this.addTrack(trackInfoList)
-					// 
 					// return
 					
 					let audioTrack = trackInfoList.filter((item) => {
@@ -405,7 +416,7 @@
 					video: {
 						enabled: true,
 						tag: "video",
-						bitrate: 1200,
+						bitrate: 1500,
 						width: 1280,
 						height: 720
 					}

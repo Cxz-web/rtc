@@ -30,7 +30,6 @@
 			},
 			showMove() {
 				const path = this.$router.currentRoute.fullPath
-				// return this.$router.currentRoute.fullPath.includes('liveHandle') ? false : true 
 				return path.includes('liveHandle')  ? false : true 
 			}
 		},
@@ -65,15 +64,13 @@
 			},
 			handle(handle) {
 				if(handle === 'close') {
-					if(this.$route.fullPath.includes('/live/newRtc')) {
+					if(this.$route.fullPath.includes('/live/noRtc')) {
 						const state = JSON.parse(localStorage.getItem('pushState'))
 						if(state) {
 							this.$message({
 								message: 'Only after closing the room can it be operated.',
 								type: 'error'
 							})
-							
-							
 							return
 						}
 						ipcRenderer.send('system-event', {

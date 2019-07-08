@@ -32,6 +32,8 @@
 	import { mapState } from "vuex"
 	let loading = null
 	const {	ipcRenderer, desktopCapturer } = require('electron')
+	let self_option
+	
 	// 01201903181114562641
 	// 01201901151300405631
 	export default {
@@ -70,7 +72,6 @@
 		},
 		
 		created() {
-			console.log('new')
 			this.roomId = this.$route.query.lessonid
 			this.$store.dispatch('setLessonId', this.roomId)
 		},
@@ -167,8 +168,9 @@
 				await this.myRTC.publish(this.tracks)
 				let options = []
 				
+				// 测试改动
 				this.tracks.forEach((item) => {
-					if (item.info.tag === 'video-track') {
+					if (item.info.tag === 'video') {
 						let sOpt = {
 							trackId: item.info.trackId,
 							x: 0,
@@ -185,6 +187,7 @@
 						options.push(aOpt)
 					}
 				})
+				self_option = options
 				this.myRTC.addMergeStreamTracks(options)
 				console.log('发布成功', options , this.tracks)
 				this.notice('push flow successfully')
@@ -194,7 +197,7 @@
 			mergeStream(addTrack) {
 				let options = []
 				this.tracks.forEach((item) => {
-					if (item.info.tag === 'video-track') {
+					if (item.info.tag === 'video') {
 						let sOpt = {
 							trackId: item.info.trackId,
 							x: 0,
@@ -211,8 +214,25 @@
 						options.push(aOpt)
 					}
 				})
+				
 				if(addTrack) {
-					options.push(addTrack)
+					addTrack.forEach((item) => {
+						if(item.kind === "audio") {
+							options.push({
+								trackId: item.trackId
+							})
+						}else if(item.kind === "video") {
+							options.push({
+								trackId: item.trackId,
+								x:0,
+								y:0,
+								z: 10,
+								w: 300,
+								h: 228
+							})
+						}
+					})
+					
 				}
 				
 				this.myRTC.addMergeStreamTracks(options)
@@ -248,10 +268,10 @@
 					          mandatory: {
 					            chromeMediaSource: 'desktop',
 					            chromeMediaSourceId: sources[i].id,
-					            minWidth: 1280,
-					            maxWidth: 1280,
-					            minHeight: 720,
-					            maxHeight: 720
+					            minWidth: 1920,
+					            maxWidth: 1920,
+					            minHeight: 1080,
+					            maxHeight: 1080
 					          }
 					        }
 					      }).then((stream) => handleStream(stream))
@@ -262,8 +282,12 @@
 					})
 					
 					async function handleStream (stream) {
+						
+					
+						
 						let track = stream.getVideoTracks()[0]
-						const videoTrack = await QNRTC.createCustomTrack(track, "video-track", 1200)
+						const videoTrack = await QNRTC.createCustomTrack(track, "video-track", 1800)
+						
 						
 						that.statsId = setInterval(()=>{
 							console.log(videoTrack.getStats())
@@ -364,20 +388,8 @@
 						timestamp: 2000
 					});
 					
-					// 测试
-					// this.addTrack(trackInfoList)
-					// 
-					// return
-					
-					let audioTrack = trackInfoList.filter((item) => {
-						return item.kind === "audio"
-					})
-					let opt = {
-						trackId: audioTrack[0].trackId
-					}
-					console.log('音频', audioTrack)
-					this.addTrack(trackInfoList)
-					this.mergeStream(opt)
+					this.addTrack(trackInfoList)	
+					this.mergeStream(trackInfoList)
 				});
 				
 				this.myRTC.on("track-remove", async trackInfoList => {
@@ -422,12 +434,7 @@
 							myVideo.classList.add('my__live')
 							loading.close()
 						}, 2000)
-						// setTimeout(() => {
-						// 	loading.close()
-						// 	myVideo.classList.add('animated')
-						// 	myVideo.classList.add('bounceIn')
-						// }, 2000)
-						// 
+					
 					}else if(item.info.tag === 'audio') {
 						item.play(localAudio)
 						this.audio = localAudio.getElementsByTagName('audio')[0]
@@ -436,7 +443,9 @@
 					
 					item.setMaster(true)
 				})
-				this.getDeskCapture(localTracks)
+				this.showHandle = true
+				this.tracks = localTracks
+				// this.getDeskCapture(localTracks)
 			},
 			
 			async addTrack(trackInfoList) {

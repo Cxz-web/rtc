@@ -196,8 +196,10 @@
 			
 			toLive(lessonid, lessonName) {
 				this.$store.dispatch('setLessonName', lessonName)
-				// this.$router.push(`/live/newRtc?lessonid=${lessonid}`)
-				this.$router.push(`/live/newRtc?lessonid=${lessonid}`)
+				// this.$router.push(`/live/testRtc?lessonid=${lessonid}`)
+				// this.$router.push(`/live/testRtc?lessonid=${lessonid}`)
+				// this.$router.push(`/live/testRtc?lessonid=${lessonid}`)
+				this.$router.push(`/live/noRtc?lessonid=${lessonid}`)
 			}
 		}
 	}

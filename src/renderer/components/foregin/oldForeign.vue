@@ -3,23 +3,47 @@
 		
 		<div class="foreign__logo"></div>
 		
-		<!-- 本地摄像头 -->
-		<div class="foreign__local" ref="local" id="local"></div>
 		
-		<!-- 连麦摄像头 -->
+		<div class="foreign__local" ref="local" id="local"></div>
 		<div class="video__box">
-			<div class="other__box" ref="other" id="other"></div>
+			
+			<div class="other__box" ref="other" id="other">
+				<div class="other__close" @click="close"></div>
+			</div>
 		</div>
 		
 		<div class="foreign__audio" ref="audio"></div>
 		
-			
+		
+		<div class="ppt__box" v-if="false">
+			<!-- 画笔 -->
+			<div class="iconfont icon-pen btn ppt__ben" @click="openPen" ref="pen">
+				<div class="color__box" v-show="showPen" >
+					<div class="color__btn" v-for="(item, index) in colorBox" :style="`background-color: ${item}`" @click.stop="selectColor(item)">
+					</div>
+				</div>
+			</div>
+			<!-- 橡皮檫 -->
+			<div class="iconfont icon-xiangpica btn" :class="{'current__bac': index ===1}" @click="openEraser"></div>
+			<!-- 清除所有 -->
+			<div class="iconfont icon-qingchuhuancun btn" :class="{'current__bac': index ===2}" @click="openClear"></div>
+		</div>
+		
+		
+		<!-- <div class="paint">
+			<canvas class="myCanvas" @mousedown="write($event)" ref="myCanvas"></canvas>
+		</div> -->
+		
+		
+		<!-- <div class="foreign__camera" @click="openCamera"></div> -->
+		
+		
 		<div class="handle__video">
 			<div class="foreign__operation" @click="openHandle" v-show="showHandle"></div>
 			<div class="foreign__audio foreign__audio--none" @click="testAudio" v-show="showHandle" ref="audio"></div>
 		</div>
 		
-		
+		<!-- <div class="foreign__shade" v-if="ppt_url"></div> -->
 		<div class="autio" id="audio"></div>
 		<!-- <video  class="test__video" ref="myVideo" id="my"></video> -->
 		
@@ -64,13 +88,12 @@
 				isClose: false,
 				tracks: null,
 				showHandle: false,
-				audio: null,
-				statsId: null
+				audio: null
 			}
 		},
 		
 		created() {
-			console.log('new')
+			console.log('old')
 			this.roomId = this.$route.query.lessonid
 			this.$store.dispatch('setLessonId', this.roomId)
 		},
@@ -84,18 +107,36 @@
 				this.start()
 			}, 1000)
 			ipcRenderer.on('current-state', this.pushStateOperation)
+			
+			
+			// setTimeout(() => {
+			// 	this.$refs.myCanvas.width = document.body.clientWidth;
+			// 	this.$refs.myCanvas.height = document.body.clientHeight - 25;
+			// }, 3000)
+			
+			
+			console.log(QNRTC.deviceManager.deviceInfo)
+			
+// 			QNRTC.deviceManager.deviceInfo.forEach((item) => {
+// 				if(item.kind === 'videoinput') {
+// 					this.videoId = item.deviceId
+// 				}
+// 				if(item.kind === 'audioinput' && item.deviceId != 'default') {
+// 					this.audioId = item.deviceId
+// 				}
+// 			})
+// 			console.log(11113, this.videoId, this.audioId)
+			// this.joinRoom()
 		},
 		
 		beforeDestroy() {
 			for (const track of this.tracks) {
 				track.release();
 			}
-			clearInterval(this.statsId)
 			this.myRTC.leaveRoom()
 			this.myRTC = null
 			ipcRenderer.removeAllListeners('current-state')
 			document.body.onfullscreenchange = null
-			
 		},
 	
 		
@@ -168,7 +209,7 @@
 				let options = []
 				
 				this.tracks.forEach((item) => {
-					if (item.info.tag === 'video-track') {
+					if (item.info.tag === 'video') {
 						let sOpt = {
 							trackId: item.info.trackId,
 							x: 0,
@@ -248,10 +289,10 @@
 					          mandatory: {
 					            chromeMediaSource: 'desktop',
 					            chromeMediaSourceId: sources[i].id,
-					            minWidth: 1280,
-					            maxWidth: 1280,
-					            minHeight: 720,
-					            maxHeight: 720
+					            minWidth: 1800,
+					            maxWidth: 1800,
+					            minHeight: 1080,
+					            maxHeight: 1080
 					          }
 					        }
 					      }).then((stream) => handleStream(stream))
@@ -262,13 +303,18 @@
 					})
 					
 					async function handleStream (stream) {
+						
+						// let oVideo = document.getElementById('my')
+					 //  oVideo.srcObject = stream
+						// console.log(oVideo, stream)
+					 //  oVideo.onloadedmetadata = (e) => {oVideo.play();console.log('play')}
+						
 						let track = stream.getVideoTracks()[0]
-						const videoTrack = await QNRTC.createCustomTrack(track, "video-track", 1200)
-						
-						that.statsId = setInterval(()=>{
-							console.log(videoTrack.getStats())
-						}, 1000)
-						
+						const videoTrack = await QNRTC.createCustomTrack(track, "video-track", 1800)
+						// 测试捕获的桌面
+						// videoTrack.play(document.getElementById('other'))
+						// qiniuTracks.splice(1, 0, videoTrack)
+						// videoTrack.setMaster(true)
 						qiniuTracks.push(videoTrack)
 						that.tracks = qiniuTracks
 						that.showHandle = true
@@ -342,9 +388,20 @@
 				QNRTC.deviceManager.on("device-add", (res) => {
 					console.log('插入新设备', res)
 					this.audioId = res.deviceId
+// 					res.forEach((item) => {
+// 						if(item.kind === 'audioinput') {
+// 							this.audioId = item.deviceId
+// 						}
+// 						if(item.kind === 'videoinput') {
+// 							this.videoId = item.deviceId
+// 						}
+// 					})
+					
 				})
 			},
+			
 			async joinRoom() {
+				
 				// 获取token
 				const res = await this.live.getRoomToken(this.roomId, 'admin')
 				const token = res.data.room_token
@@ -363,12 +420,6 @@
 						icon: require('../../assets/tip.png'),
 						timestamp: 2000
 					});
-					
-					// 测试
-					// this.addTrack(trackInfoList)
-					// 
-					// return
-					
 					let audioTrack = trackInfoList.filter((item) => {
 						return item.kind === "audio"
 					})
@@ -405,7 +456,7 @@
 					video: {
 						enabled: true,
 						tag: "video",
-						bitrate: 1200,
+						bitrate: 1500,
 						width: 1280,
 						height: 720
 					}
@@ -427,7 +478,7 @@
 						// 	myVideo.classList.add('animated')
 						// 	myVideo.classList.add('bounceIn')
 						// }, 2000)
-						// 
+						
 					}else if(item.info.tag === 'audio') {
 						item.play(localAudio)
 						this.audio = localAudio.getElementsByTagName('audio')[0]
@@ -436,7 +487,8 @@
 					
 					item.setMaster(true)
 				})
-				this.getDeskCapture(localTracks)
+				this.track = localTracks
+				// this.getDeskCapture(localTracks)
 			},
 			
 			async addTrack(trackInfoList) {
@@ -453,7 +505,7 @@
 							// item.append(oDiv)
 							setTimeout(() => {
 								item.classList.add('other__live')
-							}, 2000)
+							}, 1000)
 						}
 					} else if(track.info.kind === 'audio') {
 						track.play(this.$refs.audio)
@@ -479,6 +531,9 @@
 						this.isClose = false
 					}
 				})
+				
+				
+				
 				oVideo.style.animation = 'leaveOut ease-in-out 1s backwards'
 			}
 		}
@@ -541,7 +596,7 @@
 	
 	
 	.video__box {
-		width: 300px;
+		width: 250px;
 		height: 500px;
 		position: absolute;
 		left: 0px;
@@ -575,8 +630,8 @@
 	
 	.other__box .other__video {
 		
-		width: 300px;
-		height: 228px;
+		width: 250px;
+		height: 190px;
 		margin-bottom: 7px;
 	}
 	
