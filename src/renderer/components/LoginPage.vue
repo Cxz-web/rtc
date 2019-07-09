@@ -20,7 +20,7 @@
 				<span v-for="(item, index) in tip" class="login__title" :style="`animation-delay: ${index*0.1}s;`">{{item}}</span></div>
 		<div class="login__in" @click="login" ref="btn"> <div v-if="!showLoading">SIGN IN</div><div v-else class="login__loading"></div></div>
 		
-		<div class="login__version">v2.3.0</div>
+		<div class="login__version">v2.4.0</div>
 	</div>
 </template>
 

@@ -122,7 +122,8 @@
 				init: true,
 				count: 0,
 				canHandle: true,
-				showError: false
+				showError: false,
+				timeId: null
 			}
 		},
 		
@@ -281,6 +282,16 @@
 					//红包
 					case 503:
 						this.initPacketState(data.data)
+						clearInterval(this.id)
+						if(data.data.interactive_state === 0) {
+							this.canQuery = false
+							this.setHandle()
+						}else if(data.data.interactive_state === 1){
+							this.canQuery = true
+							this.id = setInterval(() => {
+								this.queryPacket()
+							}, 3000)
+						}
 						break;
 					// 连麦
 					case 505:
@@ -328,14 +339,16 @@
 			initPacketState(data) {
 				this.packetState = data.interactive_state // 红包状态				
 				this.packetId = this.packetState == 1 ? data.interactive_id : null
-				this.packetNum = this.packetState == 1 ? this.packetNum + 1 : this.packetNum	
+				this.packetNum = this.packetState == 1 ? this.packetNum + 1 : this.packetNum
+				
 			},
 			
 			
 			
 			setHandle() {
 				this.canHandle = false
-				setTimeout(() => {
+				clearTimeout(this.timeId)
+				this.timeId = setTimeout(() => {
 					this.canHandle = true
 				}, 25000)
 			},
@@ -345,7 +358,7 @@
 			
 			packetBtn() {
 				// 没有发红包的状态
-				this.canQuery = true
+				
 				if(this.isGivingPacket === 0) {
 					this.giveRedPacket()
 				} else {
@@ -366,7 +379,6 @@
 				
 				
 				this.setHandle()
-				
 				let loading = this.$loading({
 				      lock: true,
 				      text: 'waiting...',
@@ -374,10 +386,7 @@
 				      background: 'rgba(0, 0, 0, 0.7)'
 				})
 				
-				
-				
 				const url = this.apiUrl + '/v2/webapi/lesson/redpacket/publish'
-			
 				this.receivedPacker = 0
 				let params = {
 					lesson_id: this.lessonid,
@@ -390,12 +399,12 @@
 				this._post(url, params).then((res) => {
 					const data = res.data
 					loading.close()
-					if(data.F_responseNo === 10000) {
-						clearInterval(this.id)
-						this.id = setInterval(() => {
-							this.queryPacket()
-						}, 3000)
-					}
+					// if(data.F_responseNo === 10000) {
+					// 	clearInterval(this.id)
+					// 	this.id = setInterval(() => {
+					// 		this.queryPacket()
+					// 	}, 3000)
+					// }
 					
 				}).catch((err) => {
 					this.$message({
@@ -428,7 +437,7 @@
 			
 			// 停止分发红包
 			stopRedPacket() {
-				this.setHandle()
+				
 				const url = this.apiUrl + '/v2/webapi/lesson/redpacket/close'
 				const params = {
 					lesson_id: this.lessonid,
@@ -692,16 +701,6 @@
 				});
 			},
     
-//  this.$message({
-//  	type: 'info',
-//  	message: '已取消删除'
-//  });
-// 		
-	
-// 	this.$message({
-// 		type: 'success',
-// 		message: '删除成功!'
-// 	});
 			
 			
 			_post(url, data) {
