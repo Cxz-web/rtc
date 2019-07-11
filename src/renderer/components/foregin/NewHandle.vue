@@ -186,7 +186,12 @@
 		},
 		
 		created() {
-			console.log(this.apiUrl)
+			history.pushState(null, null, document.URL);
+			window.addEventListener('popstate', function () {
+			  history.pushState(null, null, document.URL);
+			});
+			
+			
 			this.TOKEN = this.$store.state.token
 			this.lessonid = this.$store.state.lessonId
 			this.getInitState()

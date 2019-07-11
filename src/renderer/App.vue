@@ -34,16 +34,18 @@
 			}
 		},
 		created() {
+
 			if (window.location.href.includes('myLive')) {
 				this.$router.push('/live/lessonMain')
-				// this.$router.push('/live/edit')
+	
 			}
 			if (window.location.href.includes('myHandle')) {
 				this.$router.push('/live/liveHandle')
 			}
 			
 			this.judegeWin()
-			// this.verifyDeviceAddress()
+			
+			
 		},
 		
 		
@@ -52,7 +54,6 @@
 		methods: {
 			
 			judegeWin() {
-				console.log(window.location.href)
 				if (window.location.href.includes('liveHandle')) {
 					this.win = 'handle'
 				} else if (window.location.href.includes('live')) {
@@ -77,7 +78,7 @@
 							win: 'handle',
 							handle: 'close'
 						})
-						this.$router.go(-1)
+						this.$router.push('/live/lessonMain')
 						return 
 					}
 				}
@@ -87,6 +88,7 @@
 					handle: handle
 				})
 			},
+			
 			
 			verifyDeviceAddress() {
 				// let networkInterfaces = os.networkInterfaces()

@@ -86,7 +86,6 @@
 			}
 		},
 		created() {
-			console.log(this.enviroment)
 			this.type = this.enviroment === 'test' ? 1 : 2
 			this.courseid = this.envInfo.courseId
 			console.log(this.rtnUrl, this.apiUrl)

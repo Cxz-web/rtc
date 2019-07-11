@@ -70,6 +70,10 @@
 		
 		created() {
 			console.log('OBS推流')
+			history.pushState(null, null, document.URL);
+        window.addEventListener('popstate', function () {
+            history.pushState(null, null, document.URL);
+      });
 			QNRTC.log.setLevel("disable")
 			this.roomId = this.$route.query.lessonid
 			this.$store.dispatch('setLessonId', this.roomId)
@@ -220,7 +224,7 @@
 					video: {
 						enabled: true,
 						tag: "video",
-						bitrate: 1800,
+						bitrate: 1200,
 						width: 1280,
 						height: 720
 					}

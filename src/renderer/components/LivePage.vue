@@ -8,7 +8,7 @@
 	export default {
 		name: 'live-page',
 		created() {
-			
+			history.pushState(null, null, document.URL)
 		}
 	}
 </script>
